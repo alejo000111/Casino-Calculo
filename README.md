@@ -6,10 +6,12 @@ Un blackjack (21) contra una IA en el que **la matemática es la mecánica princ
 Mientras juegas, un HUD lateral recalcula en tiempo real —con las fórmulas de los apuntes— la
 frecuencia relativa, la probabilidad condicional, la probabilidad total y el Teorema de Bayes.
 
-**Jugar ahora:** abre `ContraLaCasa.html` en cualquier navegador (doble clic). No requiere instalar nada,
-ni servidor, ni conexión.
+**Jugar en línea:** https://alejo000111.github.io/Casino-Calculo/
 
-Artifact publicado: https://claude.ai/code/artifact/347ccffd-b078-4234-a87d-082d8eca78a7
+**Jugar sin conexión:** abre `index.html` en cualquier navegador (doble clic). No requiere instalar
+nada, ni servidor.
+
+Artifact: https://claude.ai/code/artifact/347ccffd-b078-4234-a87d-082d8eca78a7
 
 ---
 
@@ -59,11 +61,14 @@ lo cual es en sí mismo estadística inferencial (estimar un parámetro a partir
 ## Estructura del repositorio
 
 ```
-ContraLaCasa.html      El juego completo (un solo archivo: HTML + CSS + JS, sin dependencias)
+index.html             El juego completo (un solo archivo: HTML + CSS + JS, sin dependencias)
 README.md              Este archivo
 docs/DISENO.md         Documento de diseño: mecánicas, fórmulas exactas, IA, plan de QA,
                        reparto de tareas y guion de sustentación
 ```
+
+El sitio en línea es este mismo `index.html` servido por **GitHub Pages** (rama `main`, carpeta raíz).
+Cada `git push` a `main` actualiza el link automáticamente en ~1 minuto.
 
 Los apuntes de clase (`Estadistica.pdf`) y la conversación de contexto se mantienen fuera del
 repositorio. Para añadirlos: `git add Estadistica.pdf && git commit -m "apuntes" && git push`.
