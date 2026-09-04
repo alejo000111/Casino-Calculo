@@ -348,7 +348,7 @@ El pedido fue darle "un plus visual": que el jugador pueda elegir dónde juega. 
    | Bogotá | 0.10 | Confiable |
    | Las Vegas | 0.18 | Vigilada |
    | Montecarlo | 0.28 | Sospechosa |
-   | Macao | 0.90 | Casi con certeza tramposa |
+   | Macao | 0.40 | Muy sospechosa |
 
    Las verosimilitudes `pGT=0.60` y `pGN=0.30` se mantienen iguales en las 4 sedes a propósito: al
    aislar la previa como única variable, el jugador puede comparar sedes y ver que es el Teorema de
@@ -357,11 +357,6 @@ El pedido fue darle "un plus visual": que el jugador pueda elegir dónde juega. 
    repite el dato; y el `sust-hint` del Panel 3 explica explícitamente que la previa cambia según la
    sede e invita a comparar. Se mantiene el motor multi-baraja (`S.numDecks`, `fullDeck()` con `id`
    único por carta) sin usar (todas las sedes fijan `decks:1`), por si se retoma en el futuro.
-
-   Macao se subió deliberadamente a `pT0=0.90` para que sea el **caso de demostración casi
-   infalible**: con una previa tan alta, `P(T|G) = (0.90·0.60)/(0.90·0.60+0.10·0.30) = 0.54/0.57 ≈
-   94.7 %` tras una sola mano ganada por el crupier — perfecto para mostrar en vivo, con muy pocas
-   manos, cómo Bayes confirma la sospecha casi con certeza cuando ya se partía de una previa alta.
 
 No se usan marcas ni nombres de casinos reales (Caesars, Bellagio, etc.), solo ciudades/países, para
 evitar cualquier problema de marca — es tematización genérica, no una afirmación de afiliación.
