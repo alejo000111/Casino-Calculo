@@ -90,18 +90,13 @@ un posterior distinto según de dónde partió la previa:
 | 🇨🇴 Bogotá | 10 % | Confiable |
 | 🇺🇸 Las Vegas | 18 % | Vigilada |
 | 🇲🇨 Montecarlo | 28 % | Sospechosa |
-| 🇲🇴 Macao | 90 % | Casi con certeza tramposa |
+| 🇲🇴 Macao | 40 % | Muy sospechosa |
 
 `P(G|T) = 0.60` y `P(G|N) = 0.30` (las verosimilitudes) son las mismas en las 4 sedes — lo único que
 cambia es la previa, para que la comparación sea limpia y quede claro que es el Teorema de Bayes
 (previa × verosimilitud) el que mueve el resultado, no una regla de juego distinta. No se usan
 nombres ni logos de casinos reales, solo la ciudad o país, para mantenerlo genérico. No puedes
 cambiar de sede a mitad de una mano (hay que repartir, plantarse o resolver primero).
-
-Macao se dejó a propósito con la previa más alta (90 %) como el **caso de demostración**: ahí el
-mecanismo de Bayes es casi infalible — con una previa tan alta basta una sola mano ganada por el
-crupier para que el posterior confirme la trampa con altísima confianza, ideal para mostrar en vivo
-en la sustentación cómo la fórmula reacciona ante evidencia fuerte.
 
 ---
 
