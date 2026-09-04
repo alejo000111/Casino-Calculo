@@ -1,0 +1,5059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Contra la Casa</title>
+<meta name="description" content="Blackjack contra una IA con visión estadística: frecuencia relativa, probabilidad condicional y Teorema de Bayes en vivo.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Big+Shoulders+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  --felt:#0c3527;
+  --felt-deep:#08251b;
+  --felt-hi:#155a43;
+  --rail:#3a2417;
+  --brass:#c99a44;
+  --brass-hi:#e7c579;
+  --bone:#ece3d2;
+  --bone-dim:#b7ab93;
+  --ink:#0a1712;
+  --panel:#0d211a;
+  --panel-2:#102a20;
+  --line:#28483b;
+  --data:#74c2d1;
+  --data-dim:#4d8f9c;
+  --muted:#89a498;
+  --risk-low:#3f9e6b;
+  --risk-mid:#e0a83a;
+  --risk-high:#d1483b;
+  --win:#5cc98a;
+  --lose:#d1483b;
+  --card-red:#c0342b;
+  --card-black:#1c2622;
+  color-scheme:dark;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+}
+
+html,body{
+  height:100%;
+}
+
+body{
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% 0%,
+      var(--felt-hi) 0%,
+      var(--felt) 42%,
+      var(--felt-deep) 100%
+    );
+  color:var(--bone);
+  font-family:"Archivo",system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{
+  max-width:1320px;
+  margin:0 auto;
+  min-height:100%;
+  padding:14px 18px 40px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+  padding:10px 16px;
+  background:linear-gradient(
+    180deg,
+    rgba(58,36,23,.9),
+    rgba(40,24,15,.9)
+  );
+  border:1px solid #4a2f1d;
+  border-radius:10px;
+  box-shadow:
+    inset 0 1px 0 rgba(231,197,121,.15),
+    0 6px 18px rgba(0,0,0,.35);
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  line-height:1;
+  margin-right:auto;
+}
+
+.brand b{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-weight:700;
+  font-size:26px;
+  letter-spacing:.06em;
+  color:var(--brass-hi);
+  text-transform:uppercase;
+}
+
+.brand span{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  letter-spacing:.22em;
+  color:var(--bone-dim);
+  text-transform:uppercase;
+  margin-top:3px;
+}
+
+.readout{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  line-height:1.1;
+}
+
+.readout .k{
+  font-family:"JetBrains Mono",monospace;
+  font-size:9.5px;
+  letter-spacing:.18em;
+  color:var(--bone-dim);
+  text-transform:uppercase;
+}
+
+.readout .v{
+  font-family:"JetBrains Mono",monospace;
+  font-weight:700;
+  font-size:19px;
+  color:var(--bone);
+  font-variant-numeric:tabular-nums;
+}
+
+.readout .v.pot{
+  color:var(--brass-hi);
+}
+
+.toggles{
+  display:flex;
+  gap:8px;
+}
+
+.tg{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--bone-dim);
+  background:rgba(0,0,0,.25);
+  border:1px solid #4a2f1d;
+  border-radius:999px;
+  padding:7px 12px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.tg[aria-pressed="true"]{
+  background:var(--brass);
+  color:var(--ink);
+  border-color:var(--brass-hi);
+  font-weight:700;
+}
+
+.tg:focus-visible{
+  outline:2px solid var(--data);
+  outline-offset:2px;
+}
+
+/* ---------- main grid ---------- */
+
+.main{
+  display:grid;
+  grid-template-columns:1fr 400px;
+  gap:16px;
+  align-items:start;
+}
+
+@media (max-width:1040px){
+  .main{
+    grid-template-columns:1fr;
+  }
+}
+
+/* ---------- table ---------- */
+
+.table-wrap{
+  position:relative;
+  transition:transform .6s ease,filter .6s ease;
+}
+
+.table-wrap.reveal{
+  transform:scale(1.03);
+}
+
+.table{
+  position:relative;
+  background:
+    radial-gradient(
+      ellipse 90% 120% at 50% -10%,
+      var(--felt-hi),
+      var(--felt) 55%,
+      var(--felt-deep)
+    );
+  border:14px solid #3a2417;
+  border-radius:140px/120px;
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,.45),
+    inset 0 3px 0 rgba(231,197,121,.08),
+    0 20px 50px rgba(0,0,0,.4);
+  padding:26px 30px 22px;
+  min-height:430px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.felt-arc{
+  position:absolute;
+  left:50%;
+  top:118px;
+  transform:translateX(-50%);
+  width:78%;
+  height:150px;
+  border:2px solid rgba(231,197,121,.22);
+  border-bottom:none;
+  border-radius:200px 200px 0 0;
+  pointer-events:none;
+}
+
+.felt-line{
+  text-align:center;
+  font-family:"Big Shoulders Display",sans-serif;
+  letter-spacing:.32em;
+  font-size:11px;
+  color:rgba(236,227,210,.4);
+  text-transform:uppercase;
+}
+
+.seat{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:center;
+  z-index:1;
+}
+
+.seat-label{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--bone-dim);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.seat-label .badge{
+  background:rgba(0,0,0,.3);
+  border:1px solid var(--line);
+  border-radius:5px;
+  padding:2px 7px;
+  color:var(--data);
+  font-weight:700;
+}
+
+.hand{
+  display:flex;
+  gap:8px;
+  min-height:104px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+.dealer-seat{
+  margin-top:4px;
+}
+
+.player-seat{
+  margin-top:auto;
+}
+
+/* ---------- multi-hand ---------- */
+
+.hands-row{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  flex-wrap:wrap;
+  width:100%;
+}
+
+.hand-block{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  border-radius:10px;
+  border:1px solid transparent;
+  transition:.2s;
+}
+
+.hand-block.split{
+  background:rgba(0,0,0,.16);
+  padding:8px 12px;
+}
+
+.hand-block.active{
+  border-color:var(--brass);
+  box-shadow:
+    0 0 0 1px var(--brass-hi) inset,
+    0 0 14px rgba(201,154,68,.25);
+}
+
+.hand-tag{
+  font-family:"JetBrains Mono",monospace;
+  font-size:9.5px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--bone-dim);
+}
+
+.hand-result{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-size:13px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  min-height:16px;
+}
+
+.hand-result.win{
+  color:var(--win);
+}
+
+.hand-result.lose{
+  color:var(--lose);
+}
+
+.hand-result.push{
+  color:var(--bone-dim);
+}
+
+/* ---------- cards ---------- */
+
+.card{
+  width:70px;
+  height:100px;
+  border-radius:8px;
+  position:relative;
+  background:linear-gradient(160deg,#fdfaf2,#e7dcc6);
+  border:1px solid #cbbfa2;
+  box-shadow:0 4px 10px rgba(0,0,0,.35);
+  font-family:"Big Shoulders Display",sans-serif;
+  color:var(--card-black);
+  flex:0 0 auto;
+}
+
+.card .r{
+  position:absolute;
+  top:5px;
+  left:7px;
+  font-size:19px;
+  font-weight:700;
+  line-height:1;
+}
+
+.card .s{
+  position:absolute;
+  bottom:4px;
+  right:7px;
+  font-size:22px;
+  line-height:1;
+}
+
+.card .mid{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  opacity:.9;
+}
+
+.card.red{
+  color:var(--card-red);
+}
+
+.card.back{
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #7d1f1a 0 7px,
+      #611511 7px 14px
+    ),
+    #7d1f1a;
+  border-color:#4a0f0c;
+}
+
+.card.back::after{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px solid rgba(231,197,121,.5);
+  border-radius:5px;
+}
+
+@keyframes deal{
+  from{
+    opacity:0;
+    transform:translateY(-34px) rotate(-6deg);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+.card.dealing{
+  animation:deal .32s ease both;
+}
+
+/* ---------- totals ---------- */
+
+.total-pill{
+  font-family:"JetBrains Mono",monospace;
+  font-weight:700;
+  font-size:15px;
+  background:rgba(0,0,0,.34);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 13px;
+  color:var(--bone);
+  font-variant-numeric:tabular-nums;
+  min-height:28px;
+}
+
+.total-pill.bust{
+  color:var(--lose);
+  border-color:var(--lose);
+}
+
+.total-pill.bj{
+  color:var(--brass-hi);
+  border-color:var(--brass);
+}
+
+.outcome{
+  text-align:center;
+  font-family:"Big Shoulders Display",sans-serif;
+  font-size:22px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  min-height:30px;
+}
+
+.outcome.win{
+  color:var(--win);
+}
+
+.outcome.lose{
+  color:var(--lose);
+}
+
+.outcome.push{
+  color:var(--bone-dim);
+}
+
+/* ---------- controls ---------- */
+
+.controls{
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+}
+
+.chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.chip{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  cursor:pointer;
+  font-family:"JetBrains Mono",monospace;
+  font-weight:700;
+  font-size:13px;
+  color:var(--ink);
+  border:3px dashed rgba(255,255,255,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.14s;
+  font-variant-numeric:tabular-nums;
+}
+
+.chip[data-v="10"]{
+  background:#c9d3d8;
+}
+
+.chip[data-v="25"]{
+  background:#5cc98a;
+}
+
+.chip[data-v="50"]{
+  background:#5aa0d8;
+}
+
+.chip[data-v="100"]{
+  background:#2b2f2d;
+  color:var(--bone);
+  border-color:var(--brass);
+}
+
+.chip[data-v="250"]{
+  background:#b95bca;
+  color:white;
+}
+
+.chip[data-v="500"]{
+  background:#d6a62d;
+  color:var(--ink);
+  border-color:var(--brass-hi);
+}
+
+.chip.allin{
+  width:auto;
+  min-width:72px;
+  border-radius:26px;
+  background:linear-gradient(180deg,#d1483b,#8e211b);
+  color:white;
+  border-color:#f0a89f;
+  padding:0 14px;
+}
+
+.chip[aria-pressed="true"]{
+  transform:translateY(-6px) scale(1.06);
+  box-shadow:
+    0 8px 16px rgba(0,0,0,.4),
+    0 0 0 3px var(--brass-hi);
+}
+
+.chip:disabled{
+  opacity:.3;
+  cursor:not-allowed;
+  filter:grayscale(.7);
+}
+
+.chip:focus-visible{
+  outline:2px solid var(--data);
+  outline-offset:3px;
+}
+
+/* ---------- custom bet ---------- */
+
+.custom-bet{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  width:100%;
+}
+
+.custom-bet label{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  color:var(--bone-dim);
+}
+
+.custom-bet input{
+  width:125px;
+  padding:9px 10px;
+  border-radius:7px;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.35);
+  color:var(--bone);
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px;
+  outline:none;
+}
+
+.custom-bet input:focus{
+  border-color:var(--data);
+  box-shadow:0 0 0 2px rgba(116,194,209,.15);
+}
+
+.custom-bet input:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+}
+
+.custom-bet button{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-weight:600;
+  font-size:14px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding:9px 14px;
+  border-radius:7px;
+  cursor:pointer;
+  background:linear-gradient(180deg,#153f30,#0e2e23);
+  color:var(--bone);
+  border:1px solid var(--line);
+}
+
+.custom-bet button:hover:not(:disabled){
+  border-color:var(--data-dim);
+  transform:translateY(-1px);
+}
+
+.custom-bet button:disabled{
+  opacity:.34;
+  cursor:not-allowed;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.btn{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-weight:600;
+  font-size:16px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:11px 20px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.14s;
+  background:linear-gradient(180deg,#153f30,#0e2e23);
+  color:var(--bone);
+  border:1px solid var(--line);
+}
+
+.btn:hover:not(:disabled){
+  border-color:var(--data-dim);
+  transform:translateY(-1px);
+}
+
+.btn:disabled{
+  opacity:.34;
+  cursor:not-allowed;
+}
+
+.btn:focus-visible{
+  outline:2px solid var(--data);
+  outline-offset:2px;
+}
+
+.btn.primary{
+  background:linear-gradient(
+    180deg,
+    var(--brass-hi),
+    var(--brass)
+  );
+  color:var(--ink);
+  border-color:var(--brass-hi);
+  font-weight:700;
+}
+
+.btn.denounce{
+  background:linear-gradient(180deg,#8a2b22,#6d201a);
+  border-color:#b8463a;
+  color:#fbe9e6;
+}
+
+/* ---------- HUD ---------- */
+
+.hud{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.hud-head{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-weight:700;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  font-size:12px;
+  color:var(--data);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.hud-head::before{
+  content:"";
+  width:8px;
+  height:8px;
+  background:var(--data);
+  box-shadow:0 0 8px var(--data);
+}
+
+.panel{
+  position:relative;
+  background:linear-gradient(
+    180deg,
+    var(--panel-2),
+    var(--panel)
+  );
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:13px 14px;
+}
+
+.panel::before,
+.panel::after{
+  content:"";
+  position:absolute;
+  width:9px;
+  height:9px;
+  border:1.5px solid var(--data-dim);
+}
+
+.panel::before{
+  top:5px;
+  left:5px;
+  border-right:none;
+  border-bottom:none;
+}
+
+.panel::after{
+  bottom:5px;
+  right:5px;
+  border-left:none;
+  border-top:none;
+}
+
+.panel h3{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--bone-dim);
+  margin-bottom:9px;
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:8px;
+}
+
+.panel h3 .tag{
+  color:var(--data-dim);
+  font-weight:500;
+  letter-spacing:.1em;
+}
+
+.bigfrac{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:4px 0 8px;
+}
+
+.frac{
+  display:inline-flex;
+  flex-direction:column;
+  text-align:center;
+  font-family:"JetBrains Mono",monospace;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  line-height:1.15;
+}
+
+.frac .num{
+  padding:0 6px 2px;
+  border-bottom:2px solid currentColor;
+}
+
+.frac .den{
+  padding:2px 6px 0;
+}
+
+.bigfrac .frac{
+  font-size:20px;
+  color:var(--data);
+}
+
+.bigfrac .eq{
+  font-family:"JetBrains Mono",monospace;
+  font-size:22px;
+  font-weight:700;
+  color:var(--bone);
+}
+
+.bigfrac .pct{
+  font-family:"JetBrains Mono",monospace;
+  font-size:24px;
+  font-weight:700;
+  color:var(--data);
+  font-variant-numeric:tabular-nums;
+}
+
+.rows{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:10px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:11.5px;
+  padding:3px 0;
+  border-bottom:1px dotted var(--line);
+}
+
+.row:last-child{
+  border-bottom:none;
+}
+
+.row .lbl{
+  color:var(--muted);
+}
+
+.row .val{
+  color:var(--bone);
+  font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+
+.row .val.hi{
+  color:var(--data);
+}
+
+.meter{
+  height:14px;
+  border-radius:7px;
+  background:rgba(0,0,0,.4);
+  border:1px solid var(--line);
+  overflow:hidden;
+  display:flex;
+  margin:8px 0 6px;
+}
+
+.meter i{
+  display:block;
+  height:100%;
+  transition:width .5s ease;
+}
+
+.meter-cap{
+  display:flex;
+  justify-content:space-between;
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.verdict{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-size:17px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+
+.derivation{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:6px;
+  background:rgba(0,0,0,.28);
+  border:1px dashed var(--data-dim);
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  line-height:1.7;
+  color:var(--bone-dim);
+}
+
+body.sustentacion .derivation{
+  display:block;
+}
+
+.derivation b{
+  color:var(--data);
+}
+
+.derivation .step{
+  display:block;
+  margin:2px 0;
+}
+
+.sust-hint{
+  display:none;
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  color:var(--data-dim);
+  margin-top:6px;
+  letter-spacing:.05em;
+}
+
+body:not(.sustentacion) .sust-hint{
+  display:block;
+}
+
+/* ---------- bayes tree ---------- */
+
+.tree{
+  width:100%;
+  height:auto;
+  margin:6px 0;
+}
+
+.tree text{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  fill:var(--bone-dim);
+}
+
+.tree text.node{
+  fill:var(--bone);
+  font-weight:700;
+  font-size:12px;
+}
+
+.tree text.prod{
+  fill:var(--data);
+  font-weight:700;
+}
+
+.tree path{
+  stroke:var(--line);
+  stroke-width:1.5;
+  fill:none;
+}
+
+.tree path.hot{
+  stroke:var(--data);
+  stroke-width:2.5;
+}
+
+.qa{
+  display:none;
+}
+
+body.qa-on .qa{
+  display:block;
+}
+
+.qa-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px;
+}
+
+.qa .btn{
+  font-size:12px;
+  padding:7px 8px;
+}
+
+.truth{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  margin-top:8px;
+  padding:6px 8px;
+  border-radius:5px;
+  text-align:center;
+  letter-spacing:.08em;
+}
+
+.truth.cheat{
+  background:rgba(209,72,59,.18);
+  color:#f0a89f;
+  border:1px solid var(--lose);
+}
+
+.truth.clean{
+  background:rgba(92,201,138,.14);
+  color:#a6e2bf;
+  border:1px solid var(--win);
+}
+
+/* ---------- toast ---------- */
+
+.toast{
+  position:fixed;
+  left:50%;
+  top:18px;
+  transform:translateX(-50%) translateY(-140%);
+  background:linear-gradient(180deg,#123a2c,#0c2a20);
+  border:1px solid var(--data-dim);
+  color:var(--bone);
+  padding:12px 20px;
+  border-radius:8px;
+  max-width:420px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px;
+  line-height:1.5;
+  box-shadow:0 12px 30px rgba(0,0,0,.5);
+  z-index:60;
+  transition:transform .4s ease;
+}
+
+.toast.show{
+  transform:translateX(-50%) translateY(0);
+}
+
+.toast b{
+  color:var(--data);
+}
+
+/* ---------- modal ---------- */
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(4,12,9,.82);
+  backdrop-filter:blur(2px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+  padding:20px;
+}
+
+.modal-bg.show{
+  display:flex;
+}
+
+.modal{
+  background:linear-gradient(
+    180deg,
+    var(--panel-2),
+    var(--panel)
+  );
+  border:1px solid var(--brass);
+  border-radius:12px;
+  max-width:520px;
+  width:100%;
+  padding:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
+
+.modal h2{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-weight:700;
+  font-size:24px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--brass-hi);
+  margin-bottom:4px;
+}
+
+.modal p{
+  font-size:12.5px;
+  color:var(--bone-dim);
+  margin-bottom:10px;
+}
+
+.modal .verdict-big{
+  font-family:"Big Shoulders Display",sans-serif;
+  font-size:26px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin:12px 0 6px;
+}
+
+.modal .btn{
+  width:100%;
+  margin-top:12px;
+}
+
+/* ---------- footer ---------- */
+
+.footnote{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  color:var(--muted);
+  text-align:center;
+  letter-spacing:.06em;
+  line-height:1.7;
+  padding-top:6px;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{
+    animation-duration:.001s!important;
+    transition-duration:.001s!important;
+  }
+}
+
+@media (max-width:600px){
+  .wrap{
+    padding:10px 8px 30px;
+  }
+
+  .table{
+    border-width:8px;
+    border-radius:70px/60px;
+    padding:22px 14px;
+  }
+
+  .card{
+    width:58px;
+    height:84px;
+  }
+
+  .card .r{
+    font-size:16px;
+  }
+
+  .card .mid{
+    font-size:28px;
+  }
+
+  .card .s{
+    font-size:18px;
+  }
+
+  .chip{
+    width:48px;
+    height:48px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+
+    <div class="brand">
+      <b>Contra la Casa</b>
+      <span>Blackjack &middot; Visi&oacute;n de Conteo</span>
+    </div>
+
+    <div class="readout">
+      <span class="k">Fichas</span>
+      <span class="v" id="rChips">1000</span>
+    </div>
+
+    <div class="readout">
+      <span class="k">Apuesta</span>
+      <span class="v" id="rBet">25</span>
+    </div>
+
+    <div class="readout">
+      <span class="k">Pozo acumulado</span>
+      <span class="v pot" id="rPot">0</span>
+    </div>
+
+    <div class="toggles">
+      <button class="tg" id="tgSust" aria-pressed="false">
+        Modo sustentaci&oacute;n
+      </button>
+
+      <button class="tg" id="tgQA" aria-pressed="false">
+        Modo QA
+      </button>
+    </div>
+
+  </div>
+
+
+  <div class="main">
+
+    <!-- TABLE -->
+    <div class="table-wrap" id="tableWrap">
+
+      <div class="table">
+
+        <div class="felt-arc"></div>
+
+        <!-- DEALER -->
+        <div class="seat dealer-seat">
+
+          <div class="seat-label">
+            Crupier IA
+            <span class="badge" id="dealerRule">
+              se planta en 17
+            </span>
+          </div>
+
+          <div class="hand" id="dealerHand"></div>
+
+          <div class="total-pill" id="dealerTotal">
+            &mdash;
+          </div>
+
+        </div>
+
+
+        <div class="felt-line">
+          Blackjack paga 3 : 2
+          &nbsp;&bull;&nbsp;
+          una baraja
+        </div>
+
+
+        <div class="outcome" id="outcome"></div>
+
+
+        <!-- PLAYER -->
+        <div class="seat player-seat">
+
+          <div class="hands-row" id="playerHandsRow"></div>
+
+          <div class="seat-label">
+            Tu mano
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- CONTROLS -->
+      <div class="controls">
+
+        <!-- CHIPS -->
+        <div class="chips" id="chips">
+
+          <button
+            class="chip"
+            data-v="10"
+            aria-pressed="false">
+            10
+          </button>
+
+          <button
+            class="chip"
+            data-v="25"
+            aria-pressed="true">
+            25
+          </button>
+
+          <button
+            class="chip"
+            data-v="50"
+            aria-pressed="false">
+            50
+          </button>
+
+          <button
+            class="chip"
+            data-v="100"
+            aria-pressed="false">
+            100
+          </button>
+
+          <button
+            class="chip"
+            data-v="250"
+            aria-pressed="false">
+            250
+          </button>
+
+          <button
+            class="chip"
+            data-v="500"
+            aria-pressed="false">
+            500
+          </button>
+
+          <button
+            class="chip allin"
+            id="bAllIn"
+            aria-pressed="false">
+            ALL-IN
+          </button>
+
+        </div>
+
+
+        <!-- CUSTOM BET -->
+        <div class="custom-bet">
+
+          <label for="customBet">
+            Apuesta libre:
+          </label>
+
+          <input
+            type="number"
+            id="customBet"
+            min="1"
+            step="1"
+            placeholder="Cantidad"
+          >
+
+          <button id="bCustomBet">
+            Apostar cantidad
+          </button>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+        <div class="actions" id="actions">
+
+          <button
+            class="btn primary"
+            id="bDeal">
+            Repartir
+          </button>
+
+          <button
+            class="btn"
+            id="bHit"
+            disabled>
+            Pedir
+          </button>
+
+          <button
+            class="btn"
+            id="bStand"
+            disabled>
+            Plantarse
+          </button>
+
+          <button
+            class="btn"
+            id="bDouble"
+            disabled>
+            Doblar
+          </button>
+
+          <button
+            class="btn"
+            id="bSplit"
+            disabled>
+            Dividir
+          </button>
+
+          <button
+            class="btn denounce"
+            id="bDenounce">
+            Denunciar anomal&iacute;a
+          </button>
+
+          <button
+            class="btn"
+            id="bLoan"
+            hidden>
+            Pedir fichas (+500)
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- HUD -->
+    <div class="hud">
+
+      <div class="hud-head">
+        Visi&oacute;n de conteo &mdash; tiempo real
+      </div>
+
+
+      <!-- PANEL 1 -->
+      <div class="panel">
+
+        <h3>
+          1 &middot; Frecuencia relativa
+          <span class="tag">
+            &iquest;pido carta?
+          </span>
+        </h3>
+
+        <div class="bigfrac">
+
+          <span class="frac" id="p1frac">
+            <span class="num">0</span>
+            <span class="den">0</span>
+          </span>
+
+          <span class="eq">=</span>
+
+          <span class="pct" id="p1pct">
+            &mdash;
+          </span>
+
+        </div>
+
+        <div class="rows" id="p1rows"></div>
+
+        <div class="derivation" id="p1deriv"></div>
+
+        <div class="sust-hint">
+          Activa &laquo;Modo sustentaci&oacute;n&raquo; para ver la f&oacute;rmula desarrollada.
+        </div>
+
+      </div>
+
+
+      <!-- PANEL 2 -->
+      <div class="panel">
+
+        <h3>
+          2 &middot; Probabilidad condicional
+          <span class="tag">
+            riesgo del crupier
+          </span>
+        </h3>
+
+        <div class="meter" id="p2meter">
+          <i style="width:0%;background:var(--risk-mid)"></i>
+        </div>
+
+        <div class="meter-cap">
+          <span>seguro</span>
+          <span>P(pierdes si te plantas)</span>
+          <span>peligro</span>
+        </div>
+
+        <div class="verdict" id="p2verdict">
+          &mdash;
+        </div>
+
+        <div class="rows" id="p2rows"></div>
+
+        <div class="derivation" id="p2deriv"></div>
+
+        <div class="sust-hint">
+          Activa &laquo;Modo sustentaci&oacute;n&raquo; para ver P(A|B) y la probabilidad total.
+        </div>
+
+      </div>
+
+
+      <!-- PANEL 3 -->
+      <div class="panel">
+
+        <h3>
+          3 &middot; Teorema de Bayes
+          <span class="tag">
+            &iquest;crupier tramposo?
+          </span>
+        </h3>
+
+        <div class="bigfrac">
+
+          <span style="
+            font-family:'JetBrains Mono',monospace;
+            font-size:12px;
+            color:var(--muted)">
+            P(Tramposo)
+          </span>
+
+          <span class="pct" id="p3pct">
+            10.0%
+          </span>
+
+        </div>
+
+        <svg
+          class="tree"
+          id="p3tree"
+          viewBox="0 0 380 150"
+          role="img"
+          aria-label="Árbol de probabilidad de Bayes">
+        </svg>
+
+        <div class="rows" id="p3rows"></div>
+
+        <div class="derivation" id="p3deriv"></div>
+
+        <div
+          class="truth qa"
+          id="p3truth">
+        </div>
+
+        <div class="sust-hint">
+          Cada mano que resuelve el crupier actualiza P(Tramposo) con Bayes.
+        </div>
+
+      </div>
+
+
+      <!-- PANEL 4 -->
+      <div class="panel">
+
+        <h3>
+          4 &middot; Espacio muestral y conteo
+          <span class="tag">
+            permutaciones / combinaciones
+          </span>
+        </h3>
+
+        <div class="rows" id="p4rows"></div>
+
+        <div
+          class="derivation"
+          id="p4deriv"
+          style="
+            display:block;
+            border-style:solid;
+            border-color:var(--line)">
+        </div>
+
+
+        <!-- QA -->
+        <div class="qa">
+
+          <div
+            class="row"
+            style="border:none;margin-top:6px">
+            <span class="lbl">
+              Par&aacute;metros del modelo Bayes (apuntes)
+            </span>
+          </div>
+
+          <div
+            class="rows"
+            id="qaParams">
+          </div>
+
+          <div class="qa-grid">
+
+            <button
+              class="btn"
+              data-qa="cheat">
+              Crupier = TRAMPOSO
+            </button>
+
+            <button
+              class="btn"
+              data-qa="clean">
+              Crupier = LIMPIO
+            </button>
+
+            <button
+              class="btn"
+              data-qa="forceWin">
+              Forzar victoria crupier
+            </button>
+
+            <button
+              class="btn"
+              data-qa="forceLose">
+              Forzar derrota crupier
+            </button>
+
+            <button
+              class="btn"
+              data-qa="shuffle">
+              Rebarajar
+            </button>
+
+            <button
+              class="btn"
+              data-qa="reset">
+              Reiniciar sesi&oacute;n
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="footnote">
+    Proyecto de Probabilidad y Estad&iacute;stica &middot; Uniempresarial
+    &nbsp;|&nbsp;
+    Motor de azar: muestreo sin reemplazo de una baraja de 52
+    &middot;
+    Estimaciones del crupier por simulaci&oacute;n Monte Carlo (n=2000)
+  </div>
+
+</div>
+
+
+<!-- TOAST -->
+<div
+  class="toast"
+  id="toast">
+</div>
+
+
+<!-- MODAL -->
+<div
+  class="modal-bg"
+  id="modalBg">
+
+  <div class="modal">
+
+    <h2>
+      Denuncia de anomal&iacute;a
+    </h2>
+
+    <p>
+      Aplicando el Teorema de Bayes sobre el historial de manos del crupier:
+    </p>
+
+    <svg
+      class="tree"
+      id="modalTree"
+      viewBox="0 0 380 150">
+    </svg>
+
+    <div
+      class="rows"
+      id="modalRows">
+    </div>
+
+    <div
+      class="verdict-big"
+      id="modalVerdict">
+    </div>
+
+    <p id="modalExplain"></p>
+
+    <button
+      class="btn primary"
+      id="modalClose">
+      Continuar
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+"use strict";
+
+const $ = s => document.querySelector(s);
+
+const SUITS = ["♠","♥","♦","♣"];
+
+const RANKS = {
+  1:"A",
+  11:"J",
+  12:"Q",
+  13:"K"
+};
+
+const rankLabel = r => RANKS[r] || String(r);
+
+const cardVal = r =>
+  r >= 10 ? 10 :
+  (r === 1 ? 11 : r);
+
+const isRed = s =>
+  s === 1 || s === 2;
+
+const cid = c =>
+  c.r * 4 + c.s;
+
+const pct = x =>
+  (100 * x).toFixed(1) + "%";
+
+const fnum = n =>
+  n.toLocaleString("es-CO");
+
+const comb = (n,k) => {
+
+  if(k < 0 || k > n) return 0;
+
+  k = Math.min(k,n-k);
+
+  let r = 1;
+
+  for(let i=0;i<k;i++){
+    r = r * (n-i) / (i+1);
+  }
+
+  return Math.round(r);
+};
+
+const perm = (n,k) => {
+
+  let r = 1;
+
+  for(let i=0;i<k;i++){
+    r *= (n-i);
+  }
+
+  return r;
+};
+
+
+/* ---------- STATE ---------- */
+
+const S = {
+
+  discard: [],
+
+  hands: [],
+
+  handIndex: 0,
+
+  split: false,
+
+  dealer: [],
+
+  holeRevealed: false,
+
+  phase: "betting",
+
+  bet: 25,
+
+  chips: 1000,
+
+  pot: 0,
+
+  pT: 0.10,
+
+  params:{
+    pT0:0.10,
+    pGT:0.60,
+    pGN:0.30
+  },
+
+  dealerCheating:
+    Math.random() < 0.10,
+
+  qaForce:null,
+
+  stats:{
+    hands:0,
+    pw:0,
+    dw:0,
+    push:0
+  },
+
+  lastUpdate:null
+};
+
+
+/* ---------- DECK ---------- */
+
+function fullDeck(){
+
+  const d = [];
+
+  for(let r=1;r<=13;r++){
+
+    for(let s=0;s<4;s++){
+
+      d.push({
+        r,
+        s
+      });
+
+    }
+
+  }
+
+  return d;
+}
+
+
+/* ---------- PHYSICAL CARDS ---------- */
+
+function physicalRemaining(){
+
+  const usedCards = [
+    ...S.discard,
+    ...S.hands.flatMap(h => h.cards),
+    ...S.dealer
+  ];
+
+  const used =
+    new Set(usedCards.map(cid));
+
+  return fullDeck().filter(
+    c => !used.has(cid(c))
+  );
+}
+
+
+/* ---------- UNSEEN CARDS ---------- */
+
+function unseenRanks(){
+
+  const used = [
+    ...S.discard,
+    ...S.hands.flatMap(h => h.cards)
+  ];
+
+  S.dealer.forEach((c,i) => {
+
+    if(
+      S.holeRevealed ||
+      i !== 1
+    ){
+      used.push(c);
+    }
+
+  });
+
+  const cnt = {};
+
+  for(let r=1;r<=13;r++){
+    cnt[r] = 4;
+  }
+
+  used.forEach(c => {
+    cnt[c.r]--;
+  });
+
+  const arr = [];
+
+  for(let r=1;r<=13;r++){
+
+    for(
+      let k=0;
+      k<cnt[r];
+      k++
+    ){
+      arr.push(r);
+    }
+
+  }
+
+  return arr;
+}
+
+
+/* ---------- DRAW ---------- */
+
+function draw(cheatFor){
+
+  const pool =
+    physicalRemaining();
+
+  if(!pool.length){
+    return null;
+  }
+
+  if(cheatFor){
+
+    let best = null;
+    let bestScore = -1e9;
+
+    for(let i=0;i<3;i++){
+
+      const c =
+        pool[
+          Math.floor(
+            Math.random()*pool.length
+          )
+        ];
+
+      const t =
+        handTotal([
+          ...cheatFor,
+          c
+        ]).t;
+
+      const score =
+        t > 21
+          ? -50 - t
+          : (t >= 17 ? t + 5 : t);
+
+      if(score > bestScore){
+
+        bestScore = score;
+        best = c;
+
+      }
+
+    }
+
+    return best;
+  }
+
+  return pool[
+    Math.floor(
+      Math.random()*pool.length
+    )
+  ];
+}
+
+
+/* ---------- HAND TOTAL ---------- */
+
+function handTotal(cards){
+
+  let t = 0;
+  let aces = 0;
+
+  for(const c of cards){
+
+    t += cardVal(c.r);
+
+    if(c.r === 1){
+      aces++;
+    }
+
+  }
+
+  while(
+    t > 21 &&
+    aces > 0
+  ){
+
+    t -= 10;
+    aces--;
+
+  }
+
+  return {
+    t,
+    soft:aces > 0,
+    bust:t > 21,
+    bj:
+      cards.length === 2 &&
+      t === 21
+  };
+}
+
+
+function curHand(){
+
+  return S.hands[
+    S.handIndex
+  ] || {
+    cards:[],
+    staked:S.bet
+  };
+
+}
+
+
+/* ---------- MONTE CARLO ---------- */
+
+function shuffled(a){
+
+  a = a.slice();
+
+  for(
+    let i=a.length-1;
+    i>0;
+    i--
+  ){
+
+    const j =
+      Math.floor(
+        Math.random()*(i+1)
+      );
+
+    [
+      a[i],
+      a[j]
+    ] =
+    [
+      a[j],
+      a[i]
+    ];
+
+  }
+
+  return a;
+}
+
+
+function simDealerTotal(upRank,pool){
+
+  const bag =
+    shuffled(pool);
+
+  let cards = [
+    {
+      r:upRank,
+      s:0
+    }
+  ];
+
+  let p = 0;
+
+  while(true){
+
+    const h =
+      handTotal(cards);
+
+    if(
+      h.t >= 17 &&
+      cards.length >= 2
+    ){
+      return h;
+    }
+
+    if(
+      p >= bag.length
+    ){
+      return h;
+    }
+
+    cards.push({
+      r:bag[p++],
+      s:0
+    });
+
+  }
+
+}
+
+
+function dealerOutcomeDist(iter){
+
+  const up =
+    S.dealer[0].r;
+
+  const pool =
+    unseenRanks();
+
+  const dist = {
+    bust:0,
+    17:0,
+    18:0,
+    19:0,
+    20:0,
+    21:0
+  };
+
+  const pv =
+    handTotal(
+      curHand().cards
+    ).t;
+
+  let lose = 0;
+  let win = 0;
+  let push = 0;
+
+  for(
+    let i=0;
+    i<iter;
+    i++
+  ){
+
+    const h =
+      simDealerTotal(
+        up,
+        pool
+      );
+
+    if(h.bust){
+
+      dist.bust++;
+      win++;
+
+    }else{
+
+      dist[h.t] =
+        (dist[h.t] || 0) + 1;
+
+      if(h.t > pv){
+        lose++;
+      }
+      else if(h.t < pv){
+        win++;
+      }
+      else{
+        push++;
+      }
+
+    }
+
+  }
+
+  for(const k in dist){
+    dist[k] /= iter;
+  }
+
+  return {
+    dist,
+    pLose:lose/iter,
+    pWin:win/iter,
+    pPush:push/iter
+  };
+
+}
+
+
+/* ---------- TOTAL PROBABILITY ---------- */
+
+function totalProbBust(iter){
+
+  const up =
+    S.dealer[0].r;
+
+  const pool =
+    unseenRanks();
+
+  const buckets = [
+
+    {
+      name:"As",
+      test:r => r === 1
+    },
+
+    {
+      name:"2&ndash;6",
+      test:r =>
+        r >= 2 &&
+        r <= 6
+    },
+
+    {
+      name:"7&ndash;9",
+      test:r =>
+        r >= 7 &&
+        r <= 9
+    },
+
+    {
+      name:"10 / figura",
+      test:r =>
+        r >= 10
+    }
+
+  ];
+
+  const N =
+    pool.length;
+
+  const terms = [];
+
+  let total = 0;
+
+  for(const b of buckets){
+
+    const idx =
+      pool
+        .map(
+          (r,i) =>
+            b.test(r) ? i : -1
+        )
+        .filter(
+          i => i >= 0
+        );
+
+    const pB =
+      idx.length / N;
+
+    if(idx.length === 0){
+
+      terms.push({
+        name:b.name,
+        pB:0,
+        pBust:0
+      });
+
+      continue;
+    }
+
+    let bust = 0;
+
+    for(
+      let i=0;
+      i<iter;
+      i++
+    ){
+
+      const forced =
+        idx[
+          Math.floor(
+            Math.random()*idx.length
+          )
+        ];
+
+      const rest =
+        shuffled(
+          pool.filter(
+            (_,k) => k !== forced
+          )
+        );
+
+      let cards = [
+        {
+          r:up,
+          s:0
+        },
+        {
+          r:pool[forced],
+          s:0
+        }
+      ];
+
+      let p = 0;
+
+      while(
+        handTotal(cards).t < 17 &&
+        p < rest.length
+      ){
+
+        cards.push({
+          r:rest[p++],
+          s:0
+        });
+
+      }
+
+      if(
+        handTotal(cards).bust
+      ){
+        bust++;
+      }
+
+    }
+
+    const pBust =
+      bust / iter;
+
+    terms.push({
+      name:b.name,
+      pB,
+      pBust
+    });
+
+    total +=
+      pB * pBust;
+  }
+
+  return {
+    terms,
+    total
+  };
+
+}
+
+
+/* ---------- NEW ROUND ---------- */
+
+function newRoundState(){
+
+  S.discard.push(
+    ...S.hands.flatMap(
+      h => h.cards
+    ),
+    ...S.dealer
+  );
+
+  S.hands = [];
+  S.handIndex = 0;
+  S.split = false;
+  S.dealer = [];
+  S.holeRevealed = false;
+  S.phase = "betting";
+  S.outcome = null;
+
+  if(
+    physicalRemaining().length < 15
+  ){
+
+    S.discard = [];
+
+    toast(
+      "<b>Barajado.</b> La baraja se rehace: las cartas vuelven a estar disponibles."
+    );
+
+  }
+
+  render();
+}
+
+
+/* ---------- DEAL ---------- */
+
+function deal(){
+
+  if(
+    S.phase !== "betting"
+  ){
+    return;
+  }
+
+  if(
+    S.chips < S.bet
+  ){
+
+    toast(
+      "No tienes fichas suficientes para esa apuesta."
+    );
+
+    return;
+  }
+
+  if(
+    S.bet <= 0
+  ){
+
+    toast(
+      "La apuesta debe ser mayor que 0."
+    );
+
+    return;
+  }
+
+  S.chips -= S.bet;
+
+  S.hands = [
+    {
+      cards:[
+        draw(),
+        draw()
+      ],
+      staked:S.bet,
+      bust:false,
+      stood:false,
+      result:null,
+      resultMsg:null,
+      fromSplit:false
+    }
+  ];
+
+  S.handIndex = 0;
+  S.split = false;
+
+  const up = draw();
+
+  S.dealer = [
+    up
+  ];
+
+  S.dealer.push(
+    draw(
+      S.dealerCheating
+        ? [up]
+        : null
+    )
+  );
+
+  S.phase = "player";
+
+  animateDeal();
+
+  const pj =
+    handTotal(
+      S.hands[0].cards
+    );
+
+  const dj =
+    handTotal(
+      S.dealer
+    );
+
+  if(
+    pj.bj ||
+    dj.bj
+  ){
+
+    S.holeRevealed = true;
+
+    resolve();
+
+  }
+  else{
+
+    const upCard =
+      S.dealer[0];
+
+    if(
+      upCard.r === 1 ||
+      cardVal(upCard.r) === 10
+    ){
+
+      const pool =
+        unseenRanks();
+
+      const need =
+        upCard.r === 1
+          ? pool.filter(
+              r => r >= 10
+            ).length
+          : pool.filter(
+              r => r === 1
+            ).length;
+
+      toast(
+        `Carta visible del crupier: <b>${rankLabel(upCard.r)}${SUITS[upCard.s]}</b>. ` +
+        `P(Blackjack del crupier | ${rankLabel(upCard.r)}) = ` +
+        `${need}/${pool.length} = <b>${pct(need/pool.length)}</b>`
+      );
+
+    }
+
+  }
+
+  render();
+}
+
+
+/* ---------- ADVANCE ---------- */
+
+function advanceIfDone(){
+
+  const h =
+    S.hands[S.handIndex];
+
+  if(
+    !h ||
+    (!h.bust && !h.stood)
+  ){
+    return;
+  }
+
+  if(
+    S.split &&
+    S.handIndex === 0 &&
+    S.hands.length > 1
+  ){
+
+    S.handIndex = 1;
+
+    render();
+
+    return;
+  }
+
+  dealerPlay();
+}
+
+
+/* ---------- HIT ---------- */
+
+function hit(){
+
+  if(
+    S.phase !== "player"
+  ){
+    return;
+  }
+
+  const h =
+    S.hands[S.handIndex];
+
+  const c = draw();
+
+  if(!c){
+    toast("No quedan cartas disponibles.");
+    return;
+  }
+
+  h.cards.push(c);
+
+  animateDeal();
+
+  const t =
+    handTotal(h.cards);
+
+  if(t.bust){
+
+    h.bust = true;
+    h.stood = true;
+
+    advanceIfDone();
+
+  }
+  else if(
+    t.t === 21
+  ){
+
+    h.stood = true;
+
+    advanceIfDone();
+
+  }
+
+  render();
+}
+
+
+/* ---------- DOUBLE ---------- */
+
+function double(){
+
+  const h =
+    S.hands[S.handIndex];
+
+  if(
+    S.phase !== "player" ||
+    !h ||
+    h.cards.length !== 2 ||
+    S.chips < h.staked
+  ){
+    return;
+  }
+
+  S.chips -= h.staked;
+
+  h.staked *= 2;
+
+  const c = draw();
+
+  if(c){
+    h.cards.push(c);
+  }
+
+  animateDeal();
+
+  h.stood = true;
+
+  if(
+    handTotal(h.cards).bust
+  ){
+    h.bust = true;
+  }
+
+  advanceIfDone();
+
+  render();
+}
+
+
+/* ---------- SPLIT ---------- */
+
+function split(){
+
+  const h =
+    S.hands[S.handIndex];
+
+  if(
+    S.phase !== "player" ||
+    S.hands.length !== 1 ||
+    !h ||
+    h.cards.length !== 2
+  ){
+    return;
+  }
+
+  if(
+    cardVal(h.cards[0].r) !==
+    cardVal(h.cards[1].r)
+  ){
+    return;
+  }
+
+  if(
+    S.chips < h.staked
+  ){
+    toast(
+      "No tienes suficientes fichas para dividir."
+    );
+
+    return;
+  }
+
+  S.chips -= h.staked;
+
+  const staked =
+    h.staked;
+
+  const c1 =
+    h.cards[0];
+
+  const c2 =
+    h.cards[1];
+
+  S.hands = [
+
+    {
+      cards:[
+        c1,
+        draw()
+      ],
+      staked,
+      bust:false,
+      stood:false,
+      result:null,
+      resultMsg:null,
+      fromSplit:true
+    },
+
+    {
+      cards:[
+        c2,
+        draw()
+      ],
+      staked,
+      bust:false,
+      stood:false,
+      result:null,
+      resultMsg:null,
+      fromSplit:true
+    }
+
+  ];
+
+  S.handIndex = 0;
+
+  S.split = true;
+
+  animateDeal();
+
+  toast(
+    `Manos divididas. Se cobra una apuesta adicional de <b>${fnum(staked)}</b> fichas para la segunda mano.`
+  );
+
+  render();
+}
+
+
+/* ---------- STAND ---------- */
+
+function stand(){
+
+  if(
+    S.phase !== "player"
+  ){
+    return;
+  }
+
+  S.hands[
+    S.handIndex
+  ].stood = true;
+
+  advanceIfDone();
+
+  render();
+}
+
+
+/* ---------- DEALER ---------- */
+
+function dealerPlay(){
+
+  S.phase = "dealer";
+
+  S.holeRevealed = true;
+
+  render();
+
+  const allBust =
+    S.hands.every(
+      h => h.bust
+    );
+
+  const step = () => {
+
+    const h =
+      handTotal(
+        S.dealer
+      );
+
+    if(
+      !allBust &&
+      h.t < 17
+    ){
+
+      const c =
+        draw(
+          S.dealerCheating
+            ? S.dealer
+            : null
+        );
+
+      if(c){
+        S.dealer.push(c);
+      }
+
+      animateDeal();
+
+      render();
+
+      setTimeout(
+        step,
+        620
+      );
+
+    }
+    else{
+
+      resolve();
+
+    }
+
+  };
+
+  setTimeout(
+    step,
+    620
+  );
+}
+
+
+/* ---------- RESULT CLASS ---------- */
+
+function overallResultClass(){
+
+  const results =
+    S.hands.map(
+      h => h.result
+    );
+
+  if(
+    results.every(
+      r => r === "win"
+    )
+  ){
+    return "win";
+  }
+
+  if(
+    results.every(
+      r => r === "lose"
+    )
+  ){
+    return "lose";
+  }
+
+  if(
+    results.every(
+      r => r === "push"
+    )
+  ){
+    return "push";
+  }
+
+  return "push";
+}
+
+
+/* ---------- RESOLVE ---------- */
+
+function resolve(){
+
+  S.holeRevealed = true;
+
+  const d =
+    handTotal(
+      S.dealer
+    );
+
+  let totalPayout = 0;
+
+  let totalStaked = 0;
+
+  const msgs = [];
+
+  const multi =
+    S.hands.length > 1;
+
+  S.hands.forEach(
+    (h,idx) => {
+
+      const p =
+        handTotal(
+          h.cards
+        );
+
+      const isNatural =
+        p.bj &&
+        !h.fromSplit &&
+        !multi;
+
+      totalStaked +=
+        h.staked;
+
+      let result;
+
+      let payout = 0;
+
+      let msg;
+
+      if(p.bust){
+
+        result = "lose";
+
+        msg =
+          "te pasaste — gana la casa";
+
+      }
+
+      else if(
+        S.qaForce === "win"
+      ){
+
+        result = "lose";
+
+        msg =
+          "[QA] victoria del crupier forzada";
+
+      }
+
+      else if(
+        S.qaForce === "lose"
+      ){
+
+        result = "win";
+
+        msg =
+          "[QA] derrota del crupier forzada";
+
+        payout =
+          h.staked * 2;
+
+      }
+
+      else if(d.bust){
+
+        result = "win";
+
+        msg =
+          "el crupier se pasó";
+
+        payout =
+          h.staked * 2;
+
+      }
+
+      else if(
+        isNatural &&
+        !d.bj
+      ){
+
+        result = "win";
+
+        msg =
+          "¡Blackjack! Paga 3 : 2";
+
+        payout =
+          h.staked +
+          Math.floor(
+            h.staked * 1.5
+          );
+
+      }
+
+      else if(
+        d.bj &&
+        !isNatural
+      ){
+
+        result = "lose";
+
+        msg =
+          "Blackjack del crupier";
+
+      }
+
+      else if(
+        p.t > d.t
+      ){
+
+        result = "win";
+
+        msg =
+          `ganas ${p.t} a ${d.t}`;
+
+        payout =
+          h.staked * 2;
+
+      }
+
+      else if(
+        p.t < d.t
+      ){
+
+        result = "lose";
+
+        msg =
+          `pierdes ${p.t} a ${d.t}`;
+
+      }
+
+      else{
+
+        result = "push";
+
+        msg =
+          `empate en ${p.t}`;
+
+        payout =
+          h.staked;
+
+      }
+
+      h.result = result;
+
+      h.resultMsg = msg;
+
+      totalPayout +=
+        payout;
+
+      msgs.push(
+        multi
+          ? `Mano ${idx+1}: ${msg}`
+          : msg.charAt(0).toUpperCase() +
+            msg.slice(1)
+      );
+
+      if(result === "win"){
+        S.stats.pw++;
+      }
+      else if(result === "lose"){
+        S.stats.dw++;
+      }
+      else{
+        S.stats.push++;
+      }
+
+    }
+  );
+
+  S.chips +=
+    totalPayout;
+
+  S.pot += 2;
+
+  S.qaForce = null;
+
+  S.phase = "resolved";
+
+  S.outcome = {
+    result:
+      overallResultClass(),
+    msg:
+      msgs.join("  ·  ")
+  };
+
+  S.stats.hands++;
+
+
+  /* BAYES */
+
+  const {
+    pGT,
+    pGN
+  } = S.params;
+
+  const pN =
+    1 - S.pT;
+
+  if(
+    totalPayout <
+    totalStaked
+  ){
+
+    const num =
+      S.pT * pGT;
+
+    const den =
+      num +
+      pN * pGN;
+
+    S.lastUpdate = {
+      obs:
+        "G (la casa ganó la ronda)",
+      prior:
+        S.pT,
+      num,
+      den,
+      post:
+        num / den,
+      l1:
+        pGT,
+      l2:
+        pGN
+    };
+
+    S.pT =
+      num / den;
+
+  }
+
+  else if(
+    totalPayout >
+    totalStaked
+  ){
+
+    const num =
+      S.pT * (1-pGT);
+
+    const den =
+      num +
+      pN * (1-pGN);
+
+    S.lastUpdate = {
+      obs:
+        "¬G (el jugador ganó la ronda)",
+      prior:
+        S.pT,
+      num,
+      den,
+      post:
+        num / den,
+      l1:
+        1-pGT,
+      l2:
+        1-pGN
+    };
+
+    S.pT =
+      num / den;
+
+  }
+
+  render();
+}
+
+
+/* ---------- DENOUNCE ---------- */
+
+function denounce(){
+
+  if(
+    S.phase === "player" ||
+    S.phase === "dealer"
+  ){
+
+    toast(
+      "Termina la mano antes de denunciar."
+    );
+
+    return;
+  }
+
+  const pN =
+    1 - S.pT;
+
+  const b1 =
+    S.pT *
+    S.params.pGT;
+
+  const b2 =
+    pN *
+    S.params.pGN;
+
+  buildTree(
+    $("#modalTree"),
+    {
+      hot:
+        S.pT >= 0.5
+    }
+  );
+
+  $("#modalRows").innerHTML =
+    mkRows([
+
+      [
+        "P(T) · P(G|T)",
+        `${S.pT.toFixed(3)} × ${S.params.pGT} = <span class="hi">${b1.toFixed(4)}</span>`
+      ],
+
+      [
+        "P(N) · P(G|N)",
+        `${pN.toFixed(3)} × ${S.params.pGN} = ${b2.toFixed(4)}`
+      ],
+
+      [
+        "P(T | racha) posterior",
+        `<span class="hi">${pct(S.pT)}</span>`
+      ],
+
+      [
+        "Manos observadas",
+        `${S.stats.hands} (crupier ganó ${S.stats.dw})`
+      ]
+
+    ]);
+
+
+  const cheating =
+    S.dealerCheating;
+
+  let vClass;
+
+  let vText;
+
+  let explain;
+
+  let delta = 0;
+
+
+  if(
+    cheating &&
+    S.pT >= 0.5
+  ){
+
+    delta =
+      S.pot;
+
+    vClass =
+      "win";
+
+    vText =
+      "Denuncia fundamentada";
+
+    explain =
+      `El crupier estaba amañando el juego y tu posterior P(T)=${pct(S.pT)} lo respaldaba. ` +
+      `Cobras el pozo acumulado: +${fnum(delta)} fichas.`;
+
+  }
+
+  else if(
+    cheating &&
+    S.pT < 0.5
+  ){
+
+    delta =
+      Math.floor(
+        S.pot / 2
+      );
+
+    vClass =
+      "win";
+
+    vText =
+      "Tenías razón… con suerte";
+
+    explain =
+      `El crupier sí hacía trampa, pero con P(T)=${pct(S.pT)} la evidencia estadística era insuficiente. ` +
+      `Recompensa parcial: +${fnum(delta)} fichas.`;
+
+  }
+
+  else{
+
+    delta =
+      -S.bet * 4;
+
+    vClass =
+      "lose";
+
+    vText =
+      "Denuncia infundada";
+
+    explain =
+      `El crupier jugaba limpio. Acusar sin base cuesta una multa de ${fnum(-delta)} fichas. ` +
+      (
+        S.pT >= 0.5
+          ? "El posterior alto fue una racha de azar: eso es un falso positivo."
+          : ""
+      );
+
+  }
+
+
+  $("#modalVerdict").className =
+    "verdict-big " +
+    vClass;
+
+  $("#modalVerdict").textContent =
+    vText;
+
+  $("#modalExplain").innerHTML =
+    explain;
+
+  S.chips =
+    Math.max(
+      0,
+      S.chips + delta
+    );
+
+  if(cheating){
+    S.pot = 0;
+  }
+
+
+  $("#tableWrap")
+    .classList
+    .add("reveal");
+
+  $("#modalBg")
+    .classList
+    .add("show");
+
+
+  S.dealerCheating =
+    Math.random() < 0.10;
+
+  S.pT = 0.10;
+
+  S.lastUpdate = null;
+}
+
+
+/* ---------- CARD ELEMENT ---------- */
+
+function cardEl(c,faceDown){
+
+  const d =
+    document.createElement("div");
+
+  d.className =
+    "card dealing" +
+    (
+      faceDown
+        ? " back"
+        : (
+          isRed(c.s)
+            ? " red"
+            : ""
+        )
+    );
+
+  if(!faceDown){
+
+    d.innerHTML =
+      `<span class="r">${rankLabel(c.r)}</span>` +
+      `<span class="mid">${SUITS[c.s]}</span>` +
+      `<span class="s">${SUITS[c.s]}</span>`;
+
+  }
+
+  return d;
+}
+
+
+let _deal = false;
+
+
+function animateDeal(){
+  _deal = true;
+}
+
+
+/* ---------- HAND BLOCK ---------- */
+
+function handBlockEl(
+  h,
+  idx,
+  multi
+){
+
+  const wrap =
+    document.createElement("div");
+
+  const isActive =
+    S.phase === "player" &&
+    multi &&
+    idx === S.handIndex;
+
+  wrap.className =
+    "hand-block" +
+    (
+      multi
+        ? " split"
+        : ""
+    ) +
+    (
+      isActive
+        ? " active"
+        : ""
+    );
+
+
+  const t =
+    handTotal(h.cards);
+
+  const showBj =
+    t.bj &&
+    !h.fromSplit &&
+    !multi;
+
+
+  const pill =
+    document.createElement("div");
+
+  pill.className =
+    "total-pill" +
+    (
+      t.bust
+        ? " bust"
+        : (
+          showBj
+            ? " bj"
+            : ""
+        )
+    );
+
+  pill.textContent =
+    h.cards.length
+      ? (
+        showBj
+          ? "Blackjack"
+          : (
+            t.t +
+            (
+              t.soft
+                ? " (suave)"
+                : ""
+            )
+          )
+      )
+      : "—";
+
+  wrap.appendChild(pill);
+
+
+  const handDiv =
+    document.createElement("div");
+
+  handDiv.className =
+    "hand";
+
+  h.cards.forEach(
+    c =>
+      handDiv.appendChild(
+        cardEl(c,false)
+      )
+  );
+
+  wrap.appendChild(
+    handDiv
+  );
+
+
+  if(multi){
+
+    const tag =
+      document.createElement("div");
+
+    tag.className =
+      "hand-tag";
+
+    tag.textContent =
+      `Mano ${idx+1}` +
+      (
+        isActive
+          ? " · en juego"
+          : ""
+      );
+
+    wrap.appendChild(tag);
+
+  }
+
+
+  if(h.result){
+
+    const res =
+      document.createElement("div");
+
+    res.className =
+      "hand-result " +
+      h.result;
+
+    res.textContent =
+      h.resultMsg;
+
+    wrap.appendChild(res);
+
+  }
+
+  return wrap;
+}
+
+
+/* ---------- RENDER HANDS ---------- */
+
+function renderHands(){
+
+  const row =
+    $("#playerHandsRow");
+
+  const dh =
+    $("#dealerHand");
+
+  row.innerHTML = "";
+
+  const multi =
+    S.hands.length > 1;
+
+  S.hands.forEach(
+    (h,idx) =>
+      row.appendChild(
+        handBlockEl(
+          h,
+          idx,
+          multi
+        )
+      )
+  );
+
+
+  dh.innerHTML = "";
+
+  S.dealer.forEach(
+    (c,i) =>
+      dh.appendChild(
+        cardEl(
+          c,
+          i === 1 &&
+          !S.holeRevealed
+        )
+      )
+  );
+
+
+  if(!_deal){
+
+    document
+      .querySelectorAll(
+        ".card.dealing"
+      )
+      .forEach(
+        e =>
+          e.classList.remove(
+            "dealing"
+          )
+      );
+
+  }
+
+  _deal = false;
+
+
+  const del =
+    $("#dealerTotal");
+
+  if(
+    !S.dealer.length
+  ){
+
+    del.textContent = "—";
+
+    del.className =
+      "total-pill";
+
+  }
+
+  else if(
+    !S.holeRevealed
+  ){
+
+    del.textContent =
+      cardVal(
+        S.dealer[0].r
+      ) +
+      " + ?";
+
+    del.className =
+      "total-pill";
+
+  }
+
+  else{
+
+    const d =
+      handTotal(
+        S.dealer
+      );
+
+    del.className =
+      "total-pill" +
+      (
+        d.bust
+          ? " bust"
+          : (
+            d.bj
+              ? " bj"
+              : ""
+          )
+      );
+
+    del.textContent =
+      d.bj
+        ? "Blackjack"
+        : (
+          d.t +
+          (
+            d.soft
+              ? " (suave)"
+              : ""
+          )
+        );
+
+  }
+
+
+  const o =
+    $("#outcome");
+
+  if(S.outcome){
+
+    o.className =
+      "outcome " +
+      S.outcome.result;
+
+    o.textContent =
+      S.outcome.msg;
+
+  }
+  else{
+
+    o.className =
+      "outcome";
+
+    o.textContent = "";
+
+  }
+
+}
+
+
+/* ---------- ROWS ---------- */
+
+function mkRows(pairs){
+
+  return pairs
+    .map(
+      ([l,v,cls]) =>
+        `<div class="row">` +
+        `<span class="lbl">${l}</span>` +
+        `<span class="val ${cls || ""}">${v}</span>` +
+        `</div>`
+    )
+    .join("");
+
+}
+
+
+function fracHTML(a,b){
+
+  return `
+    <span class="frac">
+      <span class="num">${a}</span>
+      <span class="den">${b}</span>
+    </span>
+  `;
+
+}
+
+
+/* ---------- PANELS ---------- */
+
+function renderPanels(){
+
+  const unseen =
+    unseenRanks();
+
+  const N =
+    unseen.length;
+
+  const cnt = {};
+
+  for(let r=1;r<=13;r++){
+    cnt[r] = 0;
+  }
+
+  unseen.forEach(
+    r => cnt[r]++
+  );
+
+  const tens =
+    unseen.filter(
+      r => r >= 10
+    ).length;
+
+  const aces =
+    cnt[1];
+
+  const h =
+    curHand();
+
+
+  /* PANEL 1 */
+
+  const p =
+    handTotal(h.cards);
+
+  let fav = 0;
+
+  const byNew = {};
+
+
+  if(h.cards.length){
+
+    for(let r=1;r<=13;r++){
+
+      if(!cnt[r]){
+        continue;
+      }
+
+      const nt =
+        handTotal([
+          ...h.cards,
+          {
+            r,
+            s:0
+          }
+        ]).t;
+
+      if(nt <= 21){
+        fav += cnt[r];
+      }
+
+      byNew[r] = nt;
+
+    }
+
+  }
+
+
+  if(
+    h.cards.length &&
+    N > 0
+  ){
+
+    $("#p1frac").innerHTML =
+      `<span class="num">${fav}</span>` +
+      `<span class="den">${N}</span>`;
+
+    $("#p1pct").textContent =
+      pct(fav/N);
+
+    $("#p1rows").innerHTML =
+      mkRows([
+
+        [
+          S.hands.length > 1
+            ? `Total (mano ${S.handIndex+1})`
+            : "Tu total",
+
+          p.bj
+            ? "Blackjack"
+            : (
+              p.t +
+              (
+                p.soft
+                  ? " (suave)"
+                  : ""
+              )
+            )
+        ],
+
+        [
+          "Cartas restantes (espacio muestral)",
+          String(N)
+        ],
+
+        [
+          "Cartas que <b>no</b> te pasan (favorables)",
+          `<span class="hi">${fav}</span>`
+        ],
+
+        [
+          "P(te pasas si pides)",
+          pct((N-fav)/N),
+          (N-fav)/N > 0.5
+            ? ""
+            : ""
+        ],
+
+        [
+          "P(sale un 10 / figura)",
+          `${tens}/${N} = ${pct(tens/N)}`
+        ],
+
+        [
+          "P(sale un As)",
+          `${aces}/${N} = ${pct(aces/N)}`
+        ]
+
+      ]);
+
+
+    $("#p1deriv").innerHTML =
+
+      `<span class="step">` +
+      `Espacio muestral actual: E = ${N} cartas no vistas.` +
+      `</span>` +
+
+      `<span class="step">` +
+      `Evento A = &laquo;la carta no me pasa de 21&raquo;. ` +
+      `Con ${p.t} puntos, sirve toda carta de valor &le; ${21-p.t} ` +
+      `(el As cuenta como 1).` +
+      `</span>` +
+
+      `<span class="step">` +
+      `|A| = <b>${fav}</b> &nbsp;&rarr;&nbsp; ` +
+      `P(A) = casos favorables / casos posibles = ` +
+      `<b>${fav}/${N}</b> = <b>${pct(fav/N)}</b>.` +
+      `</span>` +
+
+      `<span class="step">` +
+      `Complemento: P(Ā) = 1 &minus; ${pct(fav/N)} = ` +
+      `<b>${pct((N-fav)/N)}</b> ` +
+      `(probabilidad de pasarte).` +
+      `</span>`;
+
+  }
+
+  else{
+
+    $("#p1frac").innerHTML =
+      `<span class="num">&mdash;</span>` +
+      `<span class="den">&mdash;</span>`;
+
+    $("#p1pct").textContent =
+      "—";
+
+    $("#p1rows").innerHTML =
+      mkRows([
+        [
+          "Reparte una mano",
+          "para ver la frecuencia relativa"
+        ]
+      ]);
+
+    $("#p1deriv").innerHTML =
+      `<span class="step">` +
+      `P(A) = casos favorables / casos posibles. ` +
+      `Se recalcula tras cada carta repartida.` +
+      `</span>`;
+
+  }
+
+
+  /* PANEL 2 */
+
+  const p2r =
+    $("#p2rows");
+
+  const p2d =
+    $("#p2deriv");
+
+
+  if(S.dealer.length){
+
+    const up =
+      S.dealer[0];
+
+    let condLbl;
+
+    let condVal;
+
+    let condN = N;
+
+    let condFav = 0;
+
+
+    if(up.r === 1){
+
+      condFav =
+        tens;
+
+      condLbl =
+        "P(Blackjack crupier | As visible)";
+
+    }
+
+    else if(
+      cardVal(up.r) === 10
+    ){
+
+      condFav =
+        aces;
+
+      condLbl =
+        "P(Blackjack crupier | 10 visible)";
+
+    }
+
+    else{
+
+      condLbl =
+        "P(Blackjack crupier | carta visible)";
+
+      condFav = 0;
+
+    }
+
+
+    condVal =
+      condN
+        ? condFav/condN
+        : 0;
+
+
+    const mc =
+      dealerOutcomeDist(2000);
+
+    const risk =
+      mc.pLose;
+
+
+    const seg =
+      risk < 0.35
+        ? [
+          "var(--risk-low)",
+          "Ventaja tuya"
+        ]
+        : risk < 0.58
+          ? [
+            "var(--risk-mid)",
+            "Mano pareja"
+          ]
+          : [
+            "var(--risk-high)",
+            "Ventaja del crupier"
+          ];
+
+
+    $("#p2meter")
+      .firstElementChild
+      .style
+      .width =
+        Math.round(risk*100) +
+        "%";
+
+    $("#p2meter")
+      .firstElementChild
+      .style
+      .background =
+        seg[0];
+
+
+    const vEl =
+      $("#p2verdict");
+
+    vEl.textContent =
+      seg[1];
+
+    vEl.style.color =
+      seg[0];
+
+
+    p2r.innerHTML =
+      mkRows([
+
+        [
+          condLbl,
+          (
+            up.r === 1 ||
+            cardVal(up.r) === 10
+          )
+            ? `${condFav}/${condN} = <span class="hi">${pct(condVal)}</span>`
+            : "0% (necesita As o 10)"
+        ],
+
+        [
+          "P(crupier se pasa)",
+          pct(mc.dist.bust),
+          "hi"
+        ],
+
+        [
+          "P(pierdes si te plantas)",
+          pct(mc.pLose)
+        ],
+
+        [
+          "P(ganas si te plantas)",
+          pct(mc.pWin)
+        ],
+
+        [
+          "P(empate)",
+          pct(mc.pPush)
+        ]
+
+      ]);
+
+
+    const tp =
+      totalProbBust(700);
+
+
+    p2d.innerHTML =
+
+      `<span class="step">` +
+      `<b>Condicional</b> &mdash; el mazo no se rebaraja, ` +
+      `as&iacute; que cada carta depende de las ya vistas.` +
+      `</span>` +
+
+      `<span class="step">` +
+      `P(A|B) = P(A∩B) / P(B). ` +
+      `Dado B = &laquo;carta visible del crupier = ${rankLabel(up.r)}&raquo;, ` +
+      `el espacio se reduce a ${condN} cartas.` +
+      `</span>` +
+
+      (
+        up.r === 1 ||
+        cardVal(up.r) === 10
+          ?
+
+          `<span class="step">` +
+          `Casos favorables ` +
+          `(${up.r === 1 ? "una figura/10" : "un As"}) = ` +
+          `${condFav} &rarr; P = ` +
+          `<b>${condFav}/${condN}</b> = ` +
+          `<b>${pct(condVal)}</b>.` +
+          `</span>`
+
+          :
+
+          `<span class="step">` +
+          `Con un ${rankLabel(up.r)} el crupier no puede tener Blackjack: P = 0.` +
+          `</span>`
+      ) +
+
+      `<span class="step" style="margin-top:6px">` +
+      `<b>Probabilidad total</b> &mdash; ` +
+      `P(crupier se pasa) partiendo seg&uacute;n la carta oculta:` +
+      `</span>` +
+
+      tp.terms
+        .map(
+          t =>
+            `<span class="step">` +
+            `&nbsp;&nbsp;P(${t.name}) · ` +
+            `P(pasa|${t.name}) = ` +
+            `${t.pB.toFixed(3)} × ` +
+            `${t.pBust.toFixed(3)} = ` +
+            `${(t.pB*t.pBust).toFixed(4)}` +
+            `</span>`
+        )
+        .join("") +
+
+      `<span class="step">` +
+      `&nbsp;&nbsp;∑ = <b>${pct(tp.total)}</b> ` +
+      `&nbsp;(coincide con la simulaci&oacute;n: ` +
+      `${pct(mc.dist.bust)})` +
+      `</span>`;
+
+  }
+
+  else{
+
+    $("#p2meter")
+      .firstElementChild
+      .style
+      .width = "0%";
+
+    $("#p2verdict").textContent =
+      "—";
+
+    p2r.innerHTML =
+      mkRows([
+        [
+          "Reparte una mano",
+          "para evaluar el riesgo condicional"
+        ]
+      ]);
+
+    p2d.innerHTML =
+      `<span class="step">` +
+      `P(A|B) = P(A∩B) / P(B) ` +
+      `&mdash; se activa cuando el crupier muestra su carta.` +
+      `</span>`;
+
+  }
+
+
+  /* PANEL 3 */
+
+  $("#p3pct").textContent =
+    pct(S.pT);
+
+  buildTree(
+    $("#p3tree"),
+    {
+      hot:
+        S.pT >= 0.5
+    }
+  );
+
+
+  const u =
+    S.lastUpdate;
+
+
+  $("#p3rows").innerHTML =
+    mkRows([
+
+      [
+        "Previa P(T) → Posterior",
+        `${pct(S.params.pT0)} inicial → ` +
+        `<span class="hi">${pct(S.pT)}</span>`
+      ],
+
+      [
+        "P(G|T) / P(G|N)",
+        `${S.params.pGT} / ${S.params.pGN}`
+      ],
+
+      [
+        "Manos: crupier ganó / total",
+        `${S.stats.dw} / ${S.stats.hands}`
+      ]
+
+    ]);
+
+
+  $("#p3deriv").innerHTML =
+    u
+
+      ? `<span class="step">` +
+        `Observaci&oacute;n: <b>${u.obs}</b>.` +
+        `</span>` +
+
+        `<span class="step">` +
+        `P(T|obs) = [P(T)·L₁] / ` +
+        `[P(T)·L₁ + P(N)·L₂]` +
+        `</span>` +
+
+        `<span class="step">` +
+        `= [${u.prior.toFixed(3)} × ${u.l1.toFixed(2)}] / ` +
+        `[${u.num.toFixed(4)} + ${(u.den-u.num).toFixed(4)}]` +
+        `</span>` +
+
+        `<span class="step">` +
+        `= ${u.num.toFixed(4)} / ${u.den.toFixed(4)} = ` +
+        `<b>${pct(u.post)}</b> ` +
+        `&nbsp;(nueva previa para la pr&oacute;xima mano)` +
+        `</span>`
+
+      : `<span class="step">` +
+        `A&uacute;n sin observaciones esta ronda. ` +
+        `P(T) = ${pct(S.pT)}.` +
+        `</span>` +
+
+        `<span class="step">` +
+        `Regla de decisi&oacute;n: denuncia cuando P(T) &ge; 50% ` +
+        `para cobrar el pozo.` +
+        `</span>`;
+
+
+  const tr =
+    $("#p3truth");
+
+
+  if(
+    document.body
+      .classList
+      .contains("qa-on")
+  ){
+
+    tr.className =
+      "truth qa " +
+      (
+        S.dealerCheating
+          ? "cheat"
+          : "clean"
+      );
+
+    tr.textContent =
+      S.dealerCheating
+        ? "CRUPIER REAL: TRAMPOSO"
+        : "CRUPIER REAL: LIMPIO";
+
+  }
+
+
+  /* PANEL 4 */
+
+  $("#p4rows").innerHTML =
+    mkRows([
+
+      [
+        "|E| baraja completa",
+        "52 cartas"
+      ],
+
+      [
+        "Manos iniciales posibles (orden no importa)",
+        `C(52,2) = <span class="hi">${fnum(comb(52,2))}</span>`
+      ],
+
+      [
+        "Repartos ordenados (orden importa)",
+        `V(52,2) = ${fnum(perm(52,2))}`
+      ],
+
+      [
+        "Cartas no vistas ahora (N)",
+        String(N)
+      ],
+
+      [
+        "Manos posibles con lo que queda",
+        `C(${N},2) = ${fnum(comb(N,2))}`
+      ]
+
+    ]);
+
+
+  $("#p4deriv").innerHTML =
+
+    `<span class="step">` +
+    `<b>Combinaci&oacute;n</b> ` +
+    `(no importa el orden): ` +
+    `C(n,k) = n! / [(n−k)! k!].` +
+    `</span>` +
+
+    `<span class="step">` +
+    `Ej. loter&iacute;a 5 de 50: ` +
+    `C(50,5) = ${fnum(comb(50,5))}.` +
+    `</span>` +
+
+    `<span class="step">` +
+    `<b>Permutaci&oacute;n</b> ` +
+    `(importa el orden): ` +
+    `V(n,k) = n! / (n−k)!. ` +
+    `Ej. V(50,2) = ${fnum(perm(50,2))}.` +
+    `</span>` +
+
+    `<span class="step">` +
+    `<b>Operaciones de conjuntos</b> ` +
+    `sobre E=52: A=rojas(26), F=figuras(12), ` +
+    `A∩F=6, A∪F=32, Ā=26. P(A)=26/52=50%.` +
+    `</span>` +
+
+    `<span class="step">` +
+    `Sesi&oacute;n: ${S.stats.hands} manos ` +
+    `&mdash; ganas ${S.stats.pw}, ` +
+    `pierde ${S.stats.dw}, ` +
+    `empates ${S.stats.push}.` +
+    `</span>`;
+
+
+  /* QA PARAMS */
+
+  $("#qaParams").innerHTML =
+    mkRows([
+
+      [
+        "P(T) inicial",
+        String(S.params.pT0)
+      ],
+
+      [
+        "P(G|T)",
+        String(S.params.pGT)
+      ],
+
+      [
+        "P(G|N)",
+        String(S.params.pGN)
+      ]
+
+    ]);
+
+}
+
+
+/* ---------- BAYES TREE ---------- */
+
+function buildTree(svg,opt){
+
+  const pN =
+    1 - S.pT;
+
+  const b1 =
+    S.pT *
+    S.params.pGT;
+
+  const b2 =
+    pN *
+    S.params.pGN;
+
+  const post =
+    b1 /
+    (b1+b2);
+
+  const hotT =
+    opt &&
+    opt.hot;
+
+
+  svg.innerHTML = `
+
+    <path
+      d="M14,75 L120,32"
+      class="${hotT ? 'hot' : ''}"/>
+
+    <path
+      d="M14,75 L120,118"/>
+
+    <path
+      d="M132,32 L250,20"
+      class="${hotT ? 'hot' : ''}"/>
+
+    <path
+      d="M132,32 L250,58"/>
+
+    <path
+      d="M132,118 L250,100"/>
+
+    <path
+      d="M132,118 L250,138"/>
+
+    <text
+      x="4"
+      y="79"
+      class="node">
+      ?
+    </text>
+
+    <text
+      x="124"
+      y="30"
+      class="node">
+      T
+    </text>
+
+    <text
+      x="60"
+      y="44">
+      ${S.pT.toFixed(2)}
+    </text>
+
+    <text
+      x="124"
+      y="122"
+      class="node">
+      N
+    </text>
+
+    <text
+      x="60"
+      y="104">
+      ${pN.toFixed(2)}
+    </text>
+
+    <text
+      x="192"
+      y="14">
+      G ${S.params.pGT}
+    </text>
+
+    <text
+      x="255"
+      y="24"
+      class="prod">
+      ${b1.toFixed(3)}
+    </text>
+
+    <text
+      x="192"
+      y="60">
+      ¬G
+    </text>
+
+    <text
+      x="192"
+      y="96">
+      G ${S.params.pGN}
+    </text>
+
+    <text
+      x="255"
+      y="104"
+      class="prod">
+      ${b2.toFixed(3)}
+    </text>
+
+    <text
+      x="192"
+      y="142">
+      ¬G
+    </text>
+
+    <text
+      x="150"
+      y="150">
+      P(T|G) =
+      ${b1.toFixed(3)}
+      /
+      (${b1.toFixed(3)}+${b2.toFixed(3)})
+      =
+      ${post.toFixed(3)}
+    </text>
+
+  `;
+
+}
+
+
+/* ---------- TOP ---------- */
+
+function renderTop(){
+
+  $("#rChips").textContent =
+    fnum(
+      Math.max(
+        0,
+        Math.round(S.chips)
+      )
+    );
+
+  $("#rBet").textContent =
+    fnum(S.bet);
+
+  $("#rPot").textContent =
+    fnum(S.pot);
+}
+
+
+/* ---------- CONTROLS ---------- */
+
+function renderControls(){
+
+  const betting =
+    S.phase === "betting";
+
+  const playing =
+    S.phase === "player";
+
+  const h =
+    S.hands[S.handIndex];
+
+
+  $("#bDeal").disabled =
+    (
+      betting &&
+      S.chips < S.bet
+    ) ||
+    playing ||
+    S.phase === "dealer";
+
+
+  $("#bDeal").textContent =
+    S.phase === "resolved"
+      ? "Nueva mano"
+      : "Repartir";
+
+
+  $("#bHit").disabled =
+    !playing;
+
+  $("#bStand").disabled =
+    !playing;
+
+
+  $("#bDouble").disabled =
+    !(
+      playing &&
+      h &&
+      h.cards.length === 2 &&
+      S.chips >= h.staked
+    );
+
+
+  $("#bSplit").disabled =
+    !(
+      playing &&
+      S.hands.length === 1 &&
+      h &&
+      h.cards.length === 2 &&
+      cardVal(h.cards[0].r) ===
+      cardVal(h.cards[1].r) &&
+      S.chips >= h.staked
+    );
+
+
+  $("#bDenounce").disabled =
+    playing ||
+    S.phase === "dealer";
+
+
+  $("#bLoan").hidden =
+    !(
+      S.chips < 10 &&
+      (
+        S.phase === "betting" ||
+        S.phase === "resolved"
+      )
+    );
+
+
+  /* FIXED BETS */
+
+  document
+    .querySelectorAll(
+      "#chips .chip[data-v]"
+    )
+    .forEach(
+      c => {
+
+        const value =
+          Number(c.dataset.v);
+
+        c.setAttribute(
+          "aria-pressed",
+          String(
+            betting &&
+            value === S.bet
+          )
+        );
+
+        c.disabled =
+          !betting ||
+          value > S.chips;
+
+      }
+    );
+
+
+  /* ALL IN */
+
+  const allIn =
+    $("#bAllIn");
+
+  if(allIn){
+
+    allIn.setAttribute(
+      "aria-pressed",
+      String(
+        betting &&
+        S.chips > 0 &&
+        S.bet ===
+          Math.floor(S.chips)
+      )
+    );
+
+    allIn.disabled =
+      !betting ||
+      S.chips <= 0;
+
+  }
+
+
+  /* CUSTOM BET */
+
+  const customBet =
+    $("#customBet");
+
+  const customBetBtn =
+    $("#bCustomBet");
+
+
+  if(customBet){
+
+    customBet.disabled =
+      !betting ||
+      S.chips <= 0;
+
+    customBet.max =
+      Math.floor(
+        Math.max(
+          0,
+          S.chips
+        )
+      );
+
+  }
+
+
+  if(customBetBtn){
+
+    customBetBtn.disabled =
+      !betting ||
+      S.chips <= 0;
+
+  }
+
+}
+
+
+/* ---------- RENDER ---------- */
+
+function render(){
+
+  renderTop();
+
+  renderHands();
+
+  renderControls();
+
+  renderPanels();
+
+}
+
+
+/* ---------- EVENTS ---------- */
+
+
+/* DEAL */
+
+$("#bDeal")
+  .addEventListener(
+    "click",
+    () => {
+
+      if(
+        S.phase === "resolved"
+      ){
+
+        newRoundState();
+
+      }
+      else{
+
+        deal();
+
+      }
+
+    }
+  );
+
+
+/* HIT */
+
+$("#bHit")
+  .addEventListener(
+    "click",
+    hit
+  );
+
+
+/* STAND */
+
+$("#bStand")
+  .addEventListener(
+    "click",
+    stand
+  );
+
+
+/* DOUBLE */
+
+$("#bDouble")
+  .addEventListener(
+    "click",
+    double
+  );
+
+
+/* SPLIT */
+
+$("#bSplit")
+  .addEventListener(
+    "click",
+    split
+  );
+
+
+/* DENOUNCE */
+
+$("#bDenounce")
+  .addEventListener(
+    "click",
+    denounce
+  );
+
+
+/* LOAN */
+
+$("#bLoan")
+  .addEventListener(
+    "click",
+    () => {
+
+      S.chips += 500;
+
+      toast(
+        "La casa te presta <b>500 fichas</b>. La deuda es moral."
+      );
+
+      render();
+
+    }
+  );
+
+
+/* MODAL CLOSE */
+
+$("#modalClose")
+  .addEventListener(
+    "click",
+    () => {
+
+      $("#modalBg")
+        .classList
+        .remove("show");
+
+      $("#tableWrap")
+        .classList
+        .remove("reveal");
+
+      if(
+        S.phase === "resolved"
+      ){
+
+        newRoundState();
+
+      }
+      else{
+
+        render();
+
+      }
+
+    }
+  );
+
+
+/* ---------- FIXED BET BUTTONS ---------- */
+
+document
+  .querySelectorAll(
+    "#chips .chip[data-v]"
+  )
+  .forEach(
+    c => {
+
+      c.addEventListener(
+        "click",
+        () => {
+
+          if(
+            S.phase !== "betting"
+          ){
+            return;
+          }
+
+          const value =
+            Number(c.dataset.v);
+
+          if(
+            value > S.chips
+          ){
+
+            toast(
+              `No tienes suficientes fichas para apostar <b>${fnum(value)}</b>.`
+            );
+
+            return;
+          }
+
+          S.bet =
+            value;
+
+          $("#customBet").value =
+            "";
+
+          render();
+
+        }
+      );
+
+    }
+  );
+
+
+/* ---------- ALL IN ---------- */
+
+$("#bAllIn")
+  .addEventListener(
+    "click",
+    () => {
+
+      if(
+        S.phase !== "betting"
+      ){
+        return;
+      }
+
+      if(
+        S.chips <= 0
+      ){
+
+        toast(
+          "No tienes fichas para apostar."
+        );
+
+        return;
+      }
+
+      S.bet =
+        Math.floor(
+          S.chips
+        );
+
+      $("#customBet").value =
+        "";
+
+      render();
+
+      toast(
+        `<b>ALL-IN</b>: apuestas todas tus fichas (${fnum(S.bet)}).`
+      );
+
+    }
+  );
+
+
+/* ---------- CUSTOM BET ---------- */
+
+$("#bCustomBet")
+  .addEventListener(
+    "click",
+    () => {
+
+      if(
+        S.phase !== "betting"
+      ){
+        return;
+      }
+
+      const raw =
+        $("#customBet").value;
+
+      const value =
+        Number(raw);
+
+      if(
+        !Number.isFinite(value) ||
+        value < 1
+      ){
+
+        toast(
+          "Introduce una cantidad válida de fichas."
+        );
+
+        return;
+      }
+
+      const bet =
+        Math.floor(value);
+
+
+      if(
+        bet > S.chips
+      ){
+
+        toast(
+          `No puedes apostar <b>${fnum(bet)}</b>. ` +
+          `Solo tienes <b>${fnum(S.chips)}</b> fichas.`
+        );
+
+        return;
+      }
+
+
+      S.bet =
+        bet;
+
+      render();
+
+      toast(
+        `Apuesta personalizada: <b>${fnum(bet)}</b> fichas.`
+      );
+
+    }
+  );
+
+
+/* ---------- ENTER IN CUSTOM BET ---------- */
+
+$("#customBet")
+  .addEventListener(
+    "keydown",
+    e => {
+
+      if(
+        e.key === "Enter"
+      ){
+
+        e.preventDefault();
+
+        $("#bCustomBet")
+          .click();
+
+      }
+
+    }
+  );
+
+
+/* ---------- SUSTENTACION ---------- */
+
+$("#tgSust")
+  .addEventListener(
+    "click",
+    e => {
+
+      const on =
+        document.body
+          .classList
+          .toggle(
+            "sustentacion"
+          );
+
+      e.currentTarget
+        .setAttribute(
+          "aria-pressed",
+          String(on)
+        );
+
+    }
+  );
+
+
+/* ---------- QA ---------- */
+
+$("#tgQA")
+  .addEventListener(
+    "click",
+    e => {
+
+      const on =
+        document.body
+          .classList
+          .toggle(
+            "qa-on"
+          );
+
+      e.currentTarget
+        .setAttribute(
+          "aria-pressed",
+          String(on)
+        );
+
+      render();
+
+    }
+  );
+
+
+/* ---------- QA BUTTONS ---------- */
+
+document
+  .querySelectorAll(
+    "[data-qa]"
+  )
+  .forEach(
+    b => {
+
+      b.addEventListener(
+        "click",
+        () => {
+
+          const a =
+            b.dataset.qa;
+
+
+          if(
+            a === "cheat"
+          ){
+
+            S.dealerCheating =
+              true;
+
+            toast(
+              "[QA] Crupier fijado en <b>TRAMPOSO</b>."
+            );
+
+          }
+
+
+          if(
+            a === "clean"
+          ){
+
+            S.dealerCheating =
+              false;
+
+            toast(
+              "[QA] Crupier fijado en <b>LIMPIO</b>."
+            );
+
+          }
+
+
+          if(
+            a === "forceWin"
+          ){
+
+            S.qaForce =
+              "win";
+
+            toast(
+              "[QA] La próxima mano la gana el crupier."
+            );
+
+          }
+
+
+          if(
+            a === "forceLose"
+          ){
+
+            S.qaForce =
+              "lose";
+
+            toast(
+              "[QA] La próxima mano la pierde el crupier."
+            );
+
+          }
+
+
+          if(
+            a === "shuffle"
+          ){
+
+            S.discard = [];
+
+            toast(
+              "[QA] Baraja rehecha."
+            );
+
+          }
+
+
+          if(
+            a === "reset"
+          ){
+
+            Object.assign(
+              S,
+              {
+                discard:[],
+                hands:[],
+                handIndex:0,
+                split:false,
+                dealer:[],
+                holeRevealed:false,
+                phase:"betting",
+                bet:25,
+                chips:1000,
+                pot:0,
+                pT:0.10,
+                dealerCheating:
+                  Math.random() < 0.10,
+                qaForce:null,
+                stats:{
+                  hands:0,
+                  pw:0,
+                  dw:0,
+                  push:0
+                },
+                lastUpdate:null
+              }
+            );
+
+          }
+
+          render();
+
+        }
+      );
+
+    }
+  );
+
+
+/* ---------- KEYBOARD ---------- */
+
+document.addEventListener(
+  "keydown",
+  e => {
+
+    if(
+      e.key === "h" &&
+      !$("#bHit").disabled
+    ){
+
+      hit();
+
+    }
+
+    else if(
+      e.key === "s" &&
+      !$("#bStand").disabled
+    ){
+
+      stand();
+
+    }
+
+    else if(
+      e.key === "p" &&
+      !$("#bSplit").disabled
+    ){
+
+      split();
+
+    }
+
+    else if(
+      e.key === "d" &&
+      S.phase === "betting"
+    ){
+
+      deal();
+
+    }
+
+    else if(
+      e.key === "Enter" &&
+      S.phase === "resolved"
+    ){
+
+      newRoundState();
+
+    }
+
+  }
+);
+
+
+/* ---------- TOAST ---------- */
+
+let toastT;
+
+
+function toast(html){
+
+  const t =
+    $("#toast");
+
+  t.innerHTML =
+    html;
+
+  t.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    toastT
+  );
+
+  toastT =
+    setTimeout(
+      () =>
+        t.classList.remove(
+          "show"
+        ),
+      5200
+    );
+
+}
+
+
+/* ---------- INITIAL RENDER ---------- */
+
+render();
+
+</script>
+
+</body>
+</html>
