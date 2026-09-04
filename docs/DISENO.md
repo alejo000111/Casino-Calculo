@@ -253,10 +253,137 @@ Valores de referencia para QA: `P(T)=0.10`, `P(G|T)=0.60`, `P(G|N)=0.30`.
 
 ---
 
-## 8. Ideas si hay más tiempo (fuera del alcance de la entrega)
+## 8. Dividir mano (split) — ampliación del motor
+
+Se añadió la acción **Dividir**, disponible cuando la mano inicial tiene dos cartas del mismo valor
+(por ejemplo dos 8, o un 10 y una J). El estado `S.hands[]` pasó de una sola mano (`S.player`) a un
+arreglo de manos (`{cards, staked, bust, stood, result, resultMsg, fromSplit}`), con `S.handIndex`
+marcando cuál está activa. Al dividir: se cobra una apuesta adicional igual a la original, cada carta
+original arranca su propia mano con una carta nueva, y el jugador resuelve primero la mano 1 y luego
+la mano 2 (`advanceIfDone()` avanza el índice cuando una mano se planta o se pasa, y llama al crupier
+solo cuando ambas terminaron). El crupier juega **una sola vez** contra ambas manos. Los 4 paneles del
+HUD (frecuencia relativa, condicional, Bayes, conteo) siguen la mano activa (`curHand()`), así que el
+espacio muestral que ven es el correcto incluso con dos manos en juego. Una mano de split que suma 21
+con la carta nueva **no** cuenta como blackjack natural (regla estándar de casino): paga 1:1, no 3:2.
+
+---
+
+## 9. La Academia — segunda pestaña (ampliación)
+
+Para reforzar el objetivo del reto ("Apuesta Matemática": diseñar y sustentar un juego basado en
+probabilidad), se añadió una segunda pestaña **Academia** junto a **Mesa**, con contenido que la mesa
+de blackjack no cubre directamente: el **principio fundamental del conteo** y el **diagrama de árbol**
+como herramienta, más un banco de ejercicios resueltos tomados literalmente del documento de clase.
+
+**Por qué una pestaña aparte y no mezclarlo con el HUD del blackjack:** el HUD está diseñado para leerse
+mientras se juega una mano — números que cambian en vivo. Los ejercicios de la Academia necesitan
+enunciado + respuesta + verificación, un ritmo distinto. Separarlos evita saturar el HUD y le da al
+profesor/jurado dos momentos claros de la sustentación: "así se ve la estadística jugando" (Mesa) y
+"así se sustenta con los ejercicios del curso" (Academia).
+
+**Estructura (todo dentro del mismo `index.html`, sin dependencias nuevas):**
+
+- `#tabMesa` / `#tabAcademia` alternan `.view` con `hidden`; dentro de Academia, 3 sub-pestañas
+  (`acTabConteo`, `acTabPerm`, `acTabBayes`) con el mismo patrón.
+- `mkCard(cfg)` genera cada tarjeta de ejercicio: enunciado, input, botón «Comprobar» (compara contra
+  `cfg.answer` con tolerancia `cfg.tol`), botón «Ver solución» (derivación paso a paso, mismo estilo
+  `.derivation`/`.acad-sol` del HUD) y una marca visual de "resuelto".
+- El progreso se guarda por ejercicio en `localStorage` (`contraLaCasaAcademiaProgress`) y alimenta la
+  barra de progreso y el contador junto a la pestaña "Academia" (`n/16`).
+- El **principio de conteo** tiene una calculadora editable (agregar/quitar etapas) que recalcula
+  `N = n₁×n₂×…×nₖ` en vivo, con 3 presets del PDF (placas, dado+moneda, casa del urbanista).
+- El **diagrama de árbol** reutiliza el ejemplo de las 3 facultades del PDF (0.5/0.25/0.25 × 0.6/0.4) y
+  permite resaltar en oro una rama individual o el conjunto de ramas que arma `P(Mujer)` por
+  probabilidad total.
+- Los 16 ejercicios (4 de conteo + 8 de permutaciones/combinaciones + 4 de probabilidad total/Bayes)
+  están resueltos con los valores exactos del documento; ver el detalle numérico en `README.md`.
+
+---
+
+## 10. Panel 5 — Simulación de Monte Carlo (ampliación del HUD)
+
+Los QA y el jurado preguntaban lo mismo cada vez: *"¿por qué n = 2000? ¿de dónde sale ese número que
+dice P(crupier se pasa)?"*. El pie de página siempre lo mencionó, pero solo como una frase — no había
+dónde profundizar. Se agregó el **Panel 5** a la Mesa (siempre visible, no solo en modo sustentación)
+que explica y visualiza la simulación en vez de solo nombrarla:
+
+- **Texto corto** de qué hace la simulación y por qué no hay fórmula cerrada (el número de cartas que
+  pide el crupier es variable, así que enumerar combinatoriamente todos los caminos es engorroso;
+  simular y contar la frecuencia relativa converge al mismo resultado).
+- **Gráfica de convergencia** (`mcConvergence()` + `drawMcChart()`): corre una sola secuencia de 2000
+  manos del crupier (misma función `simDealerTotal` que ya usaba el Panel 2) y va anotando la
+  estimación acumulada de `P(crupier se pasa)` en puntos de control (`n = 10, 25, 50, …, 2000`). La
+  curva salta mucho al principio (pocas muestras) y se aplana hacia la línea dorada final — es la
+  **ley de los grandes números** dibujada en vivo, no solo mencionada.
+- **Error estándar e intervalo de confianza**: `SE = √[p(1−p)/n]` y un IC aproximado al 95%
+  (`estimación ± 1.96·SE`), para que quede explícito que la simulación es una *estimación con margen
+  de error medible*, no un valor exacto.
+- Cuando todavía no hay mano repartida (`S.dealer` vacío), el panel no queda en blanco: corre un
+  escenario ilustrativo (`fakeFullPool()`, crupier con una figura visible y mazo casi completo) para
+  que siempre haya algo que leer, y lo etiqueta claramente como ejemplo.
+- Botón **«Repetir simulación»** vuelve a correr las 2000 manos con nuevas semillas aleatorias — útil
+  en la sustentación para mostrar que el resultado *varía un poco* entre corridas (por eso el margen de
+  error) pero siempre converge cerca del mismo valor.
+- El panel se recalcula automáticamente en cada `render()` (cada carta repartida, cada cambio de fase),
+  igual que los otros 4 paneles.
+
+---
+
+## 12. Casinos del mundo — sedes con piel visual (ampliación)
+
+El pedido fue darle "un plus visual": que el jugador pueda elegir dónde juega. Se agregó una barra
+**«Elige tu casino»** debajo del encabezado con 4 sedes — 🇨🇴 Bogotá, 🇺🇸 Las Vegas, 🇲🇨 Montecarlo,
+🇲🇴 Macao. Pasó por dos iteraciones:
+
+1. Primera versión: cada sede ataba reglas distintas (más barajas, crupier pide en 17 suave,
+   blackjack paga 6:5, previa `P(Tramposo)` más alta) para simular "dificultad".
+2. Se pidió quitar la dificultad y dejar solo el cambio de lugar — las 4 sedes pasaron a compartir
+   exactamente las mismas reglas (`decks:1, hitSoft17:false, bjPayout:1.5`) y, en ese momento,
+   también la misma previa `P(T)=0.10`.
+3. Se pidió después **reintroducir una variación, pero solo en la previa de Bayes**, para que el
+   Panel 3 (Teorema de Bayes) sea el protagonista del cambio de sede en vez de las reglas de juego:
+
+   | Sede | `pT0` (previa) | `trustLabel` |
+   |---|---|---|
+   | Bogotá | 0.10 | Confiable |
+   | Las Vegas | 0.18 | Vigilada |
+   | Montecarlo | 0.28 | Sospechosa |
+   | Macao | 0.40 | Muy sospechosa |
+
+   Las verosimilitudes `pGT=0.60` y `pGN=0.30` se mantienen iguales en las 4 sedes a propósito: al
+   aislar la previa como única variable, el jugador puede comparar sedes y ver que es el Teorema de
+   Bayes (previa × verosimilitud) el que mueve el posterior, no un cambio de reglas. La tarjeta de
+   cada sede muestra en vivo `P(Tramposo) previa: X%` y su `trustLabel`; el toast al cambiar de sede
+   repite el dato; y el `sust-hint` del Panel 3 explica explícitamente que la previa cambia según la
+   sede e invita a comparar. Se mantiene el motor multi-baraja (`S.numDecks`, `fullDeck()` con `id`
+   único por carta) sin usar (todas las sedes fijan `decks:1`), por si se retoma en el futuro.
+
+No se usan marcas ni nombres de casinos reales (Caesars, Bellagio, etc.), solo ciudades/países, para
+evitar cualquier problema de marca — es tematización genérica, no una afirmación de afiliación.
+
+**Reskin visual** (`applyLocation(id)`): cada sede define un objeto `theme` con variables CSS
+(`--felt`, `--rail`, `--brass`, `--data`, `--bg-decor`, …) que se aplican con
+`document.documentElement.style.setProperty()`. El fondo degradado vive directamente en
+`body{background:var(--bg-decor)}` (no en una capa `position:fixed` aparte — esa primera versión
+dejaba un artefacto negro al capturar la página completa porque los elementos fijos no repintan bien
+en algunas herramientas de captura por scroll; ponerlo en `body`, que ya ocupa el alto real del
+documento, lo resuelve de raíz). Cada sede además tiene un par de detalles finos por CSS
+(`body[data-loc="vegas"] .brand b{text-shadow:…}` para el neón, cursiva y marco dorado en Montecarlo,
+rayas rojas y dorado en Macao) para que la piel se sienta distinta sin duplicar HTML.
+
+**Guardas de estado**: no se puede cambiar de sede a mitad de una mano (`S.phase !== "bet"` bloquea el
+clic y muestra un toast pidiendo terminar la mano); cambiar de sede reinicia la mano y el posterior de
+Bayes a la previa de esa sede (`S.pT = loc.pT0`, distinta por sede), y se avisa con un toast que ya
+incluye el nuevo `P(Tramposo)`. El pie de página sigue mostrando "Blackjack paga 3:2 · 1 baraja" en
+cualquier sede, para que quede claro que las reglas de juego no cambian — solo la previa de Bayes.
+
+---
+
+## 13. Ideas si hay más tiempo (fuera del alcance de la entrega)
 
 - Ruleta europea: `P(rojo) = 18/37`, intersección rojo ∩ par = `9/37` (espacio muestral y conjuntos).
 - Tragamonedas de 3 rodillos: permutaciones de símbolos = nº de líneas de pago a animar.
 - Minijuego "jefe de seguridad": 3 crupieres (50 % / 30 % / 20 % de los turnos), moneda cargada,
   deducir cuál fue con Bayes (`P(C | Cara)`).
 - Historial de manos exportable para el informe escrito.
+- Temporizador por ejercicio en la Academia y exportar el progreso a PDF para el informe escrito.
