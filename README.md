@@ -4,7 +4,17 @@ Proyecto para **Probabilidad, Estadística y Métodos Numéricos** · Uniempresa
 
 Un blackjack (21) contra una IA en el que **la matemática es la mecánica principal, no código oculto**.
 Mientras juegas, un HUD lateral recalcula en tiempo real —con las fórmulas de los apuntes— la
-frecuencia relativa, la probabilidad condicional, la probabilidad total y el Teorema de Bayes.
+frecuencia relativa, la probabilidad condicional, la probabilidad total, el Teorema de Bayes y
+cómo se estiman esas probabilidades por simulación de Monte Carlo.
+
+El sitio tiene **dos pestañas**: **Mesa** (el blackjack, con soporte para dividir manos —*split*—
+cuando te reparten un par) y **Academia**, una sección de práctica con calculadora del principio de
+conteo, un diagrama de árbol explorable y 16 ejercicios resueltos del documento de clase con
+validación de respuesta. Ver «La Academia» más abajo.
+
+Además puedes **elegir en qué casino del mundo juegas** — Bogotá, Las Vegas, Montecarlo o Macao —
+cada uno con su propia piel visual y reglas reales de casino que suben la dificultad. Ver «Los
+casinos del mundo» más abajo.
 
 **Jugar en línea:** https://alejo000111.github.io/Casino-Calculo/
 
@@ -24,10 +34,12 @@ Artifact: https://claude.ai/code/artifact/347ccffd-b078-4234-a87d-082d8eca78a7
 | Pedir carta | `Pedir` · `H` | Suma una carta a tu mano; si pasas de 21 pierdes |
 | Plantarse | `Plantarse` · `S` | Cede el turno; el crupier juega hasta 17 |
 | Doblar | `Doblar` | Duplica la apuesta, recibes 1 carta y te plantas |
+| Dividir | `Dividir` · `P` | Si tus 2 cartas valen igual, las separa en 2 manos independientes (cobra apuesta extra) |
 | Denunciar anomalía | `Denunciar anomalía` | Acusas al crupier de tramposo usando el posterior de Bayes |
 
-Reglas: una sola baraja de 52, **el crupier se planta en 17** (incluido 17 "suave"),
-blackjack natural paga **3 : 2**, empate devuelve la apuesta.
+Reglas base (sede Bogotá): una sola baraja de 52, **el crupier se planta en 17** (incluido 17
+"suave"), blackjack natural paga **3 : 2**, empate devuelve la apuesta. Estas reglas cambian según
+la sede elegida — ver la sección siguiente.
 
 ### Dos interruptores para la sustentación
 
@@ -48,13 +60,56 @@ blackjack natural paga **3 : 2**, empate devuelve la apuesta.
 | 3 | **Probabilidad total** `P(D) = Σ P(Bᵢ)·P(D\|Bᵢ)` sobre una partición | Panel 2 (sustentación): `P(crupier se pasa)` se descompone según la carta oculta (As / 2–6 / 7–9 / 10) y se suma ponderado. |
 | 4 | **Teorema de Bayes** `P(A\|D) = P(A)·P(D\|A) / P(D)`, árboles de probabilidad | Panel 3: cada mano que resuelve el crupier actualiza `P(Tramposo)` con Bayes, encadenando el posterior como nueva previa. Árbol dibujado en pantalla. |
 | 5 | **Conteo**: permutaciones `V(n,k) = n!/(n−k)!` y combinaciones `C(n,k) = n!/[(n−k)!k!]` | Panel 4: `C(52,2) = 1326` manos iniciales, `V(52,2) = 2652` repartos ordenados, y `C(N,2)` con las cartas que quedan. Incluye el ejemplo de lotería `C(50,5)`. |
+| 6 | **Simulación / estimación (ley de los grandes números)** | Panel 5 *(nuevo)*: explica qué hace la simulación de Monte Carlo de n=2000 manos, muestra una gráfica de convergencia (la estimación de `P(crupier se pasa)` recalculada cada cierto número de manos, acercándose a la línea final) y el error estándar / intervalo de confianza al 95% de la estimación. |
 
 Parámetros del modelo de Bayes (tomados de los apuntes):
 `P(T) = 0.10`, `P(N) = 0.90`, `P(G|T) = 0.60`, `P(G|N) = 0.30`.
 
 El motor de azar es **muestreo sin reemplazo** de una baraja real de 52; las probabilidades del
-crupier que dependen de varias cartas se estiman por **simulación de Monte Carlo** (n = 2000),
-lo cual es en sí mismo estadística inferencial (estimar un parámetro a partir de muchas muestras).
+crupier que dependen de varias cartas (cuántas pedirá antes de plantarse o pasarse) no tienen una
+fórmula cerrada simple, así que se estiman por **simulación de Monte Carlo** (n = 2000): se le reparten
+al crupier 2000 manos completas siguiendo su regla real y se cuenta la frecuencia relativa de cada
+resultado. Es estadística inferencial —estimar un parámetro a partir de muchas muestras— y el
+**Panel 5** de la Mesa ahora lo explica paso a paso con una gráfica de convergencia y el margen de error.
+
+---
+
+## Los casinos del mundo (barra nueva)
+
+Arriba de la mesa hay una barra **«Elige tu casino»** con 4 sedes. Cambiar de sede reinicia el
+zapato y el posterior de Bayes, cambia la piel visual (colores, fondo, tipografía) en alusión al
+lugar, y sube la dificultad con **reglas reales de casinos físicos** — no es solo cosmético:
+
+| Sede | Barajas en el zapato | Crupier pide en 17 suave | Blackjack paga | P(Tramposo) previa | Dificultad |
+|---|---|---|---|---|---|
+| 🇨🇴 Bogotá | 1 | No | 3 : 2 | 10 % | Fácil |
+| 🇺🇸 Las Vegas | 2 | No | 3 : 2 | 12 % | Medio |
+| 🇲🇨 Montecarlo | 4 | Sí | 6 : 5 | 15 % | Difícil |
+| 🇲🇴 Macao | 6 | Sí | 6 : 5 | 20 % | Muy difícil |
+
+Cada palanca conecta con un tema del curso ya presente en el HUD: más barajas diluye el conteo de
+cartas y agranda el espacio muestral del Panel 4 (`|E|` pasa de 52 a hasta 312 cartas); el crupier
+pidiendo en 17 suave y el pago reducido a 6:5 son reglas reales que suben la ventaja de la casa; y la
+previa `P(Tramposo)` más alta por sede deja ver en el Panel 3 cómo cambia el posterior de Bayes según
+de dónde parta la previa. No se usan nombres ni logos de casinos reales, solo la ciudad o país, para
+mantenerlo genérico. No puedes cambiar de sede a mitad de una mano (hay que repartir, plantarse o
+resolver primero).
+
+---
+
+## La Academia (pestaña nueva)
+
+Un cuaderno interactivo con **16 ejercicios** en 3 pestañas, tomados o adaptados del documento
+*Probabilidad Total y Teorema de Bayes · Técnicas de Conteo* de la clase:
+
+| Pestaña | Contenido |
+|---|---|
+| **1 · Conteo y árbol** | Calculadora en vivo del principio fundamental del conteo (`N = n₁·n₂·…·nₖ`) con presets (placas de Bogotá, dado+moneda, casa del urbanista); diagrama de árbol interactivo (facultades/género) que resalta `P(Mujer)` por probabilidad total o una rama individual; 4 ejercicios de conteo verificables. |
+| **2 · Permutaciones y combinaciones** | 8 ejercicios (premios, club, conferencia, base de datos, batido, muestra, cartuchos, examen) con respuesta verificable y solución paso a paso. |
+| **3 · Probabilidad total y Bayes** | Los 4 problemas de palabras del documento (proveedores, cirugías, accidentes, llaveros), con partición, cálculo desarrollado al revelar la solución. |
+
+El progreso se guarda en el navegador (`localStorage`) y se muestra en una barra arriba de la Academia
+y en el contador junto a la pestaña. Sigue siendo el mismo `index.html` de un solo archivo, sin backend.
 
 ---
 

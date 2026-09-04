@@ -9,6 +9,7 @@
     --felt-deep:#08251b;
     --felt-hi:#155a43;
     --rail:#3a2417;
+    --rail-dark:#4a2f1d;
     --brass:#c99a44;
     --brass-hi:#e7c579;
     --bone:#ece3d2;
@@ -27,18 +28,25 @@
     --lose:#d1483b;
     --card-red:#c0342b;
     --card-black:#1c2622;
+    --card-back-1:#7d1f1a;
+    --card-back-2:#611511;
+    --card-back-border:#4a0f0c;
+    --bg-decor: radial-gradient(ellipse 120% 80% at 50% 0%, var(--felt-hi) 0%, var(--felt) 42%, var(--felt-deep) 100%);
     color-scheme: dark;
   }
+  /* ---------- background decor layer (swapped per destino) ---------- */
+  .bg-decor{display:none}
   *{box-sizing:border-box;margin:0}
-  html,body{height:100%}
+  html{background:var(--felt-deep)}
   body{
-    background:
-      radial-gradient(ellipse 120% 80% at 50% 0%, var(--felt-hi) 0%, var(--felt) 42%, var(--felt-deep) 100%);
+    background:var(--bg-decor);
+    background-attachment:fixed;
     color:var(--bone);
     font-family:"Archivo",system-ui,sans-serif;
     font-size:14px;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
+    transition:background .7s ease, color .4s ease;
   }
   .wrap{
     max-width:1320px;
@@ -55,9 +63,10 @@
     display:flex;align-items:center;gap:18px;flex-wrap:wrap;
     padding:10px 16px;
     background:linear-gradient(180deg,rgba(58,36,23,.9),rgba(40,24,15,.9));
-    border:1px solid #4a2f1d;
+    border:1px solid var(--rail-dark);
     border-radius:10px;
     box-shadow:inset 0 1px 0 rgba(231,197,121,.15), 0 6px 18px rgba(0,0,0,.35);
+    transition:border-color .5s ease;
   }
   .brand{display:flex;flex-direction:column;line-height:1;margin-right:auto}
   .brand b{
@@ -83,7 +92,7 @@
   .tg{
     font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--bone-dim);
-    background:rgba(0,0,0,.25);border:1px solid #4a2f1d;border-radius:999px;
+    background:rgba(0,0,0,.25);border:1px solid var(--rail-dark);border-radius:999px;
     padding:7px 12px;cursor:pointer;transition:.15s;
   }
   .tg[aria-pressed="true"]{
@@ -102,7 +111,7 @@
     position:relative;
     background:
       radial-gradient(ellipse 90% 120% at 50% -10%, var(--felt-hi), var(--felt) 55%, var(--felt-deep));
-    border:14px solid #3a2417;
+    border:14px solid var(--rail);
     border-radius:140px/120px;
     box-shadow:
       inset 0 0 60px rgba(0,0,0,.45),
@@ -112,6 +121,7 @@
     min-height:430px;
     display:flex;flex-direction:column;
     gap:10px;
+    transition:border-color .5s ease;
   }
   .felt-arc{
     position:absolute;left:50%;top:118px;transform:translateX(-50%);
@@ -163,9 +173,10 @@
   .card.red{color:var(--card-red)}
   .card.back{
     background:
-      repeating-linear-gradient(45deg,#7d1f1a 0 7px,#611511 7px 14px),
-      #7d1f1a;
-    border-color:#4a0f0c;
+      repeating-linear-gradient(45deg,var(--card-back-1) 0 7px,var(--card-back-2) 7px 14px),
+      var(--card-back-1);
+    border-color:var(--card-back-border);
+    transition:background .5s ease,border-color .5s ease;
   }
   .card.back::after{
     content:"";position:absolute;inset:6px;border:1px solid rgba(231,197,121,.5);border-radius:5px;
@@ -331,13 +342,213 @@
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.001s!important;transition-duration:.001s!important}
   }
+
+  /* ---------- monte carlo panel ---------- */
+  .mc-blurb{font-size:11.5px;color:var(--bone-dim);line-height:1.6;margin-bottom:8px}
+  .mc-blurb b{color:var(--data)}
+  .mc-run{padding:6px 10px;font-size:12px;margin-bottom:6px}
+  .mc-chart{width:100%;height:auto;margin:4px 0 8px}
+  .mc-chart text{font-family:"JetBrains Mono",monospace;font-size:9px;fill:var(--bone-dim)}
+  .mc-chart .final-lbl{fill:var(--brass-hi);font-weight:700}
+  .mc-chart .axis{stroke:var(--line);stroke-width:1}
+  .mc-chart .ref{stroke:var(--brass);stroke-width:1;stroke-dasharray:3,3}
+  .mc-chart .curve{stroke:var(--data);stroke-width:2;fill:none}
+  .mc-chart .pt{fill:var(--data)}
+  .mc-ci{
+    font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--bone-dim);
+    background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin-top:6px;
+  }
+  .mc-ci b{color:var(--brass-hi)}
+
+  /* ---------- destino / location bar ---------- */
+  .locbar{
+    display:flex;flex-direction:column;gap:8px;padding:12px 14px;
+    background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.32));
+    border:1px solid var(--line);border-radius:10px;transition:border-color .5s ease;
+  }
+  .locbar-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .locbar-title{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--brass-hi);
+  }
+  .locbar-sub{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--muted)}
+  .locrow{display:flex;gap:10px;flex-wrap:wrap}
+  .locbtn{
+    flex:1 1 190px;min-width:170px;text-align:left;cursor:pointer;position:relative;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;
+    padding:9px 12px;transition:.18s;color:var(--bone);
+  }
+  .locbtn:hover{border-color:var(--data-dim);transform:translateY(-1px)}
+  .locbtn:focus-visible{outline:2px solid var(--data);outline-offset:2px}
+  .locbtn[aria-pressed="true"]{
+    border-color:var(--brass-hi);box-shadow:0 0 0 1px var(--brass-hi) inset,0 0 16px rgba(231,197,121,.25);
+    background:rgba(0,0,0,.4);
+  }
+  .locbtn .lname{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:15px;
+    display:flex;align-items:center;gap:7px;letter-spacing:.02em;
+  }
+  .locbtn .lflag{font-size:17px}
+  .locbtn .lmeta{
+    font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.06em;
+    color:var(--bone-dim);margin-top:3px;display:flex;justify-content:space-between;gap:6px;
+  }
+  .locbtn .ldots{letter-spacing:.14em}
+  .locbtn .ldots i{color:var(--line);font-style:normal}
+  .locbtn .ldots i.on{color:var(--brass-hi)}
+  .locbtn[aria-pressed="true"] .lname{color:var(--brass-hi)}
+  .locbtn .lblurb{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
+
+  /* ---------- flourishes por destino ---------- */
+  body[data-loc="vegas"] .brand b{
+    text-shadow:0 0 10px var(--brass-hi),0 0 22px var(--data),0 0 2px #fff;
+  }
+  body[data-loc="vegas"] .table{
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,.5),
+      inset 0 3px 0 rgba(255,255,255,.08),
+      0 0 40px rgba(0,229,255,.18), 0 0 70px rgba(255,47,176,.14),
+      0 20px 50px rgba(0,0,0,.5);
+  }
+  body[data-loc="montecarlo"] .brand b{font-style:italic;letter-spacing:.09em}
+  body[data-loc="montecarlo"] .panel::before,
+  body[data-loc="montecarlo"] .panel::after{border-color:var(--brass)}
+  body[data-loc="macao"] .table{
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,.5),
+      inset 0 3px 0 rgba(232,185,35,.14),
+      0 0 50px rgba(232,185,35,.16),
+      0 20px 50px rgba(0,0,0,.5);
+  }
+  body[data-loc="macao"] .felt-arc{border-color:rgba(232,185,35,.35)}
+
+  /* ---------- main tabs (Mesa / Academia) ---------- */
+  .maintabs{display:flex;gap:8px}
+  .maintab{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--bone-dim);
+    background:rgba(0,0,0,.22);border:1px solid var(--rail-dark);border-radius:8px;
+    padding:8px 16px;cursor:pointer;transition:.15s;
+  }
+  .maintab[aria-selected="true"]{
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);border-color:var(--brass-hi);
+  }
+  .maintab .pip{
+    display:inline-block;margin-left:7px;min-width:16px;padding:0 4px;border-radius:8px;
+    background:rgba(0,0,0,.28);color:var(--data);font-family:"JetBrains Mono",monospace;font-size:10px;
+  }
+  .maintab[aria-selected="true"] .pip{background:rgba(10,23,18,.25);color:var(--ink)}
+  .view[hidden]{display:none}
+
+  /* ---------- academia layout ---------- */
+  .acad-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .acad-tab{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--bone-dim);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;cursor:pointer;transition:.15s;
+  }
+  .acad-tab[aria-selected="true"]{background:var(--data);color:var(--ink);border-color:var(--data);font-weight:700}
+  .acad-sec[hidden]{display:none}
+  .acad-head{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:700;font-size:22px;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--brass-hi);margin-bottom:2px;
+  }
+  .acad-sub{font-size:12.5px;color:var(--bone-dim);margin-bottom:16px;max-width:760px;line-height:1.6}
+  .acad-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:900px){ .acad-grid{grid-template-columns:1fr} }
+  .acad-card{
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;
+  }
+  .acad-card h4{
+    font-family:"Big Shoulders Display",sans-serif;font-size:16px;letter-spacing:.03em;
+    color:var(--bone);margin-bottom:6px;text-transform:none;
+  }
+  .acad-card .tema{
+    font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--data-dim);margin-bottom:8px;
+  }
+  .acad-card p.enun{font-size:12.5px;color:var(--bone-dim);line-height:1.55;margin-bottom:12px}
+  .acad-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .acad-form input[type=text]{
+    flex:1;min-width:100px;font-family:"JetBrains Mono",monospace;font-size:13px;
+    background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:6px;color:var(--bone);
+    padding:8px 10px;
+  }
+  .acad-form input[type=text]:focus-visible{outline:2px solid var(--data);outline-offset:1px}
+  .acad-feedback{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;padding:7px 9px;border-radius:6px;
+    margin-top:6px;display:none;line-height:1.5;
+  }
+  .acad-feedback.ok{display:block;background:rgba(92,201,138,.14);color:#a6e2bf;border:1px solid var(--win)}
+  .acad-feedback.bad{display:block;background:rgba(209,72,59,.14);color:#f0a89f;border:1px solid var(--lose)}
+  .acad-sol{
+    display:none;margin-top:10px;padding:10px;border-radius:6px;
+    background:rgba(0,0,0,.28);border:1px dashed var(--data-dim);
+    font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.75;color:var(--bone-dim);
+  }
+  .acad-sol.show{display:block}
+  .acad-sol b{color:var(--data)}
+  .acad-sol .step{display:block;margin:2px 0}
+  .acad-card.solved{border-color:var(--win)}
+  .acad-card.solved::before{
+    content:"\2713 resuelto";position:absolute;top:12px;right:14px;
+    font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--win);
+  }
+
+  .counter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  .counter-step{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:74px;
+  }
+  .counter-step label{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+  .counter-step input{
+    width:56px;text-align:center;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:16px;
+    background:transparent;border:none;color:var(--data);border-bottom:1px solid var(--line);
+  }
+  .counter-op{font-family:"Big Shoulders Display",sans-serif;font-size:20px;color:var(--bone-dim)}
+  .counter-result{
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:20px;color:var(--brass-hi);
+    background:rgba(0,0,0,.3);border:1px solid var(--brass);border-radius:8px;padding:8px 16px;
+  }
+  .counter-preset{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .counter-preset button{
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--bone-dim);
+    background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer;
+  }
+  .counter-preset button:hover{border-color:var(--data-dim);color:var(--bone)}
+
+  .tree-controls{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .tree-controls button{
+    font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--bone);
+    background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer;
+  }
+  .tree-controls button:hover{border-color:var(--data-dim)}
+  .tree-big{width:100%;height:auto}
+  .tree-big text{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--bone-dim)}
+  .tree-big text.node{fill:var(--bone);font-weight:700}
+  .tree-big text.prod{fill:var(--brass-hi);font-weight:700}
+  .tree-big path{stroke:var(--line);stroke-width:1.6;fill:none}
+  .tree-big path.hot{stroke:var(--brass-hi);stroke-width:3}
+  .tree-big text.node.hot,.tree-big text.hi{fill:var(--brass-hi)}
+
+  .progress-bar{
+    display:flex;align-items:center;gap:10px;margin-bottom:16px;
+    background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:8px;padding:9px 13px;
+  }
+  .progress-bar .track{flex:1;height:10px;border-radius:5px;background:rgba(0,0,0,.4);border:1px solid var(--line);overflow:hidden}
+  .progress-bar .track i{display:block;height:100%;background:linear-gradient(90deg,var(--data-dim),var(--data));transition:width .5s ease}
+  .progress-bar .lbl{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .progress-bar .lbl b{color:var(--brass-hi)}
 </style>
 
+<div class="bg-decor" id="bgDecor"></div>
 <div class="wrap">
   <div class="topbar">
     <div class="brand">
-      <b>Contra la Casa</b>
-      <span>Blackjack &middot; Visi&oacute;n de Conteo</span>
+      <b id="brandTitle">Contra la Casa</b>
+      <span id="brandSub">Blackjack &middot; Visi&oacute;n de Conteo</span>
     </div>
     <div class="readout"><span class="k">Fichas</span><span class="v" id="rChips">1000</span></div>
     <div class="readout"><span class="k">Apuesta</span><span class="v" id="rBet">25</span></div>
@@ -348,6 +559,20 @@
     </div>
   </div>
 
+  <div class="locbar">
+    <div class="locbar-head">
+      <span class="locbar-title">&#127758; Elige tu casino</span>
+      <span class="locbar-sub">viajar sube la dificultad: m&aacute;s barajas, reglas m&aacute;s duras para el jugador</span>
+    </div>
+    <div class="locrow" id="locRow"></div>
+  </div>
+
+  <div class="maintabs" role="tablist" aria-label="Secciones">
+    <button class="maintab" id="tabMesa" role="tab" aria-selected="true">&#127183; Mesa</button>
+    <button class="maintab" id="tabAcademia" role="tab" aria-selected="false">&#128218; Academia <span class="pip" id="acadPip">0/16</span></button>
+  </div>
+
+  <div class="view" id="viewMesa">
   <div class="main">
     <!-- TABLE -->
     <div class="table-wrap" id="tableWrap">
@@ -358,7 +583,7 @@
           <div class="hand" id="dealerHand"></div>
           <div class="total-pill" id="dealerTotal">&mdash;</div>
         </div>
-        <div class="felt-line">Blackjack paga 3 : 2 &nbsp;&bull;&nbsp; una baraja</div>
+        <div class="felt-line" id="feltLine">Blackjack paga 3 : 2 &nbsp;&bull;&nbsp; una baraja</div>
         <div class="outcome" id="outcome"></div>
         <div class="seat player-seat">
           <div class="hands-row" id="playerHandsRow"></div>
@@ -445,13 +670,114 @@
           </div>
         </div>
       </div>
+
+      <!-- Panel 5: simulación de Monte Carlo -->
+      <div class="panel">
+        <h3>5 &middot; Simulaci&oacute;n de Monte Carlo <span class="tag">c&oacute;mo estimamos al crupier</span></h3>
+        <p class="mc-blurb">
+          Los paneles 2 y 4 no usan una f&oacute;rmula cerrada para <b>P(crupier se pasa)</b> &mdash; depender&iacute;a de
+          cu&aacute;ntas cartas pida, y eso var&iacute;a mano a mano. En vez de eso, el juego <b>simula la mesa</b>:
+          reparte al crupier <b>n&nbsp;=&nbsp;2000</b> manos completas al azar (sin reemplazo, desde el mismo mazo que
+          ver&iacute;a el jugador), lo hace jugar con su regla real (pide hasta 17) y cuenta en qu&eacute; fracci&oacute;n de esas
+          2000 manos se pasa. Esa fracci&oacute;n <i>es</i> la estimaci&oacute;n de Monte Carlo &mdash; y como es una muestra
+          aleatoria, converge al valor real a medida que crece <b>n</b>, con un margen de error que se puede calcular.
+        </p>
+        <div class="tree-controls">
+          <button class="btn mc-run" id="mcRun">&#8635; Repetir simulaci&oacute;n (nuevas 2000 manos)</button>
+        </div>
+        <svg class="mc-chart" id="mcChart" viewBox="0 0 380 150" role="img" aria-label="Convergencia de la estimaci&oacute;n de Monte Carlo seg&uacute;n el tama&ntilde;o de la muestra"></svg>
+        <div class="rows" id="mcRows"></div>
+        <div class="mc-ci" id="mcCI"></div>
+        <div class="derivation" id="mcDeriv" style="display:block;border-style:solid;border-color:var(--line)"></div>
+        <div class="sust-hint">Cada vez que cambia la mano (o pulsas &laquo;Repetir simulaci&oacute;n&raquo;) se corre una tanda nueva de 2000 manos.</div>
+      </div>
     </div>
   </div>
 
   <div class="footnote">
     Proyecto de Probabilidad y Estad&iacute;stica &middot; Uniempresarial &nbsp;|&nbsp;
-    Motor de azar: muestreo sin reemplazo de una baraja de 52 &middot; Estimaciones del crupier por simulaci&oacute;n Monte Carlo (n=2000)
+    Motor de azar: muestreo sin reemplazo de una baraja de 52 &middot; Estimaciones del crupier por simulaci&oacute;n Monte Carlo (n=2000, ver Panel 5)
   </div>
+  </div><!-- /viewMesa -->
+
+  <div class="view" id="viewAcademia" hidden>
+    <div class="progress-bar">
+      <span class="lbl">Progreso de la Academia</span>
+      <div class="track"><i id="progFill" style="width:0%"></i></div>
+      <span class="lbl"><b id="progCount">0</b> / <span id="progTotal">16</span> ejercicios resueltos</span>
+    </div>
+
+    <div class="acad-nav" role="tablist" aria-label="Temas de Academia">
+      <button class="acad-tab" id="acTabConteo" role="tab" aria-selected="true">1 &middot; Conteo y &aacute;rbol</button>
+      <button class="acad-tab" id="acTabPerm" role="tab" aria-selected="false">2 &middot; Permutaciones y combinaciones</button>
+      <button class="acad-tab" id="acTabBayes" role="tab" aria-selected="false">3 &middot; Probabilidad total y Bayes</button>
+    </div>
+
+    <!-- ============ SECCION 1: Principio de conteo + arbol ============ -->
+    <section class="acad-sec" id="acSecConteo">
+      <div class="acad-head">Principio fundamental del conteo</div>
+      <p class="acad-sub">
+        Regla b&aacute;sica: si un experimento consta de <i>k</i> etapas con
+        <i>n&#8321;, n&#8322;, &hellip;, n&#8342;</i> opciones cada una, el n&uacute;mero total de resultados
+        posibles es <b style="color:var(--data)">N = n&#8321; &middot; n&#8322; &middot; &hellip; &middot; n&#8342;</b>.
+        Arma tu propio experimento de varias etapas y mira el resultado en vivo.
+      </p>
+
+      <div class="acad-card">
+        <div class="tema">Calculadora &middot; regla de multiplicaci&oacute;n</div>
+        <div class="counter-preset">
+          <button data-preset="placas">Placas de Bogot&aacute; (letra,letra,d&iacute;gito,d&iacute;gito,d&iacute;gito)</button>
+          <button data-preset="dadomoneda">Dado + moneda</button>
+          <button data-preset="casa">Estilo de fachada &times; plano (urbanista)</button>
+          <button data-preset="clear">Vac&iacute;o</button>
+        </div>
+        <div class="counter-row" id="counterRow"></div>
+        <div class="counter-row">
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--bone-dim);font-size:12px">N =</span>
+          <span class="counter-result" id="counterResult">&mdash;</span>
+        </div>
+        <div class="acad-sol show" id="counterDeriv"></div>
+      </div>
+
+      <div class="acad-card" style="margin-top:14px">
+        <div class="tema">Diagrama de &aacute;rbol &middot; ejemplo de los apuntes</div>
+        <p class="enun">
+          Una universidad tiene 3 facultades que reciben el 50%, 25% y 25% de los aspirantes.
+          En cada facultad, el 60% de los admitidos son mujeres y el 40% hombres.
+          El &aacute;rbol multiplica las probabilidades rama por rama (principio de conteo aplicado a probabilidades).
+        </p>
+        <div class="tree-controls">
+          <button data-tree="mujer">Resaltar P(Mujer)</button>
+          <button data-tree="hombre1">Resaltar P(1&ordf; Facultad &cap; Hombre)</button>
+          <button data-tree="none">Quitar resaltado</button>
+        </div>
+        <svg class="tree-big" id="bigTree" viewBox="0 0 620 230" role="img" aria-label="Diagrama de árbol de facultades y g&eacute;nero"></svg>
+        <div class="acad-sol show" id="treeDeriv"></div>
+      </div>
+    </section>
+
+    <!-- ============ SECCION 2: permutaciones y combinaciones ============ -->
+    <section class="acad-sec" id="acSecPerm" hidden>
+      <div class="acad-head">Permutaciones y combinaciones</div>
+      <p class="acad-sub">
+        <b style="color:var(--data)">Permutaci&oacute;n</b> V(n,r) = n! / (n&minus;r)! &mdash; el orden importa (arreglos).
+        <b style="color:var(--data)">Combinaci&oacute;n</b> C(n,r) = n! / [r!(n&minus;r)!] &mdash; el orden no importa (selecciones).
+        Resuelve cada ejercicio del banco de apuntes y revisa la soluci&oacute;n paso a paso.
+      </p>
+      <div class="acad-grid" id="permGrid"></div>
+    </section>
+
+    <!-- ============ SECCION 3: probabilidad total y bayes ============ -->
+    <section class="acad-sec" id="acSecBayes" hidden>
+      <div class="acad-head">Probabilidad total y Teorema de Bayes</div>
+      <p class="acad-sub">
+        <b style="color:var(--data)">Probabilidad total:</b> P(A) = &sum; P(B&#7522;)&middot;P(A&#124;B&#7522;) sobre una partici&oacute;n B&#8321;,&hellip;,B&#8342;.
+        <b style="color:var(--data)">Bayes:</b> P(B&#7522;&#124;A) = P(B&#7522;)&middot;P(A&#124;B&#7522;) / P(A).
+        Estos son los cuatro problemas del documento de clase &mdash; resu&eacute;lvelos aqu&iacute; mismo.
+      </p>
+      <div class="acad-grid" id="bayesGrid"></div>
+    </section>
+  </div><!-- /viewAcademia -->
 </div>
 
 <div class="toast" id="toast"></div>
@@ -476,13 +802,80 @@ const RANKS = {1:"A",11:"J",12:"Q",13:"K"};
 const rankLabel = r => RANKS[r] || String(r);
 const cardVal = r => r >= 10 ? 10 : (r === 1 ? 11 : r);
 const isRed = s => s === 1 || s === 2;
-const cid = c => c.r * 4 + c.s;
+const cid = c => c.id;
 const pct = x => (100 * x).toFixed(1) + "%";
 const fnum = n => n.toLocaleString("es-CO");
 const comb = (n,k) => { if(k<0||k>n) return 0; k=Math.min(k,n-k); let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return Math.round(r); };
 const perm = (n,k) => { let r=1; for(let i=0;i<k;i++) r*=(n-i); return r; };
 
+/* ---------------- destinos: cada casino cambia reglas + piel visual ---------------- */
+const LOCATIONS = {
+  bogota: {
+    name: "Bogotá", country: "Colombia", flag: "\u{1F1E8}\u{1F1F4}",
+    decks: 1, hitSoft17: false, bjPayout: 1.5, pT0: 0.10, pGT: 0.60, pGN: 0.30,
+    diff: 1, diffLabel: "Fácil",
+    blurb: "Mesa de casa: 1 baraja, crupier se planta en 17.",
+    subtitle: "Blackjack · Visión de Conteo",
+    theme: {
+      "--felt":"#0c3527", "--felt-deep":"#08251b", "--felt-hi":"#155a43",
+      "--rail":"#3a2417", "--rail-dark":"#4a2f1d",
+      "--brass":"#c99a44", "--brass-hi":"#e7c579",
+      "--data":"#74c2d1", "--data-dim":"#4d8f9c",
+      "--card-back-1":"#7d1f1a", "--card-back-2":"#611511", "--card-back-border":"#4a0f0c",
+      "--bg-decor":"radial-gradient(ellipse 120% 80% at 50% 0%, var(--felt-hi) 0%, var(--felt) 42%, var(--felt-deep) 100%)",
+    },
+  },
+  vegas: {
+    name: "Las Vegas", country: "Estados Unidos", flag: "\u{1F1FA}\u{1F1F8}",
+    decks: 2, hitSoft17: false, bjPayout: 1.5, pT0: 0.12, pGT: 0.62, pGN: 0.30,
+    diff: 2, diffLabel: "Medio",
+    blurb: "Neón toda la noche: 2 barajas, la casa ya arriesga más.",
+    subtitle: "Blackjack · Las Vegas Nights",
+    theme: {
+      "--felt":"#1a0b2e", "--felt-deep":"#0d0518", "--felt-hi":"#2d1454",
+      "--rail":"#120a1f", "--rail-dark":"#2a1440",
+      "--brass":"#ff2fb0", "--brass-hi":"#ffd23f",
+      "--data":"#00e5ff", "--data-dim":"#0a93a8",
+      "--card-back-1":"#3a0e5c", "--card-back-2":"#1f0733", "--card-back-border":"#ff2fb0",
+      "--bg-decor":"radial-gradient(circle at 15% 15%, rgba(255,47,176,.28), transparent 42%), radial-gradient(circle at 85% 12%, rgba(0,229,255,.24), transparent 42%), radial-gradient(circle at 50% 95%, rgba(255,210,63,.14), transparent 55%), linear-gradient(180deg,#0d0518 0%,#1a0b2e 45%,#0d0518 100%)",
+    },
+  },
+  montecarlo: {
+    name: "Montecarlo", country: "Mónaco", flag: "\u{1F1F2}\u{1F1E8}",
+    decks: 4, hitSoft17: true, bjPayout: 1.2, pT0: 0.15, pGT: 0.65, pGN: 0.28,
+    diff: 3, diffLabel: "Difícil",
+    blurb: "Riviera elegante: 4 barajas, pide en 17 suave, blackjack paga 6:5.",
+    subtitle: "Blackjack · Riviera Française",
+    theme: {
+      "--felt":"#0a1f3d", "--felt-deep":"#050f1f", "--felt-hi":"#163a66",
+      "--rail":"#0d1a2e", "--rail-dark":"#1c2f4d",
+      "--brass":"#b4913a", "--brass-hi":"#f0d896",
+      "--data":"#7ec8e3", "--data-dim":"#4a7f96",
+      "--card-back-1":"#0f2b52", "--card-back-2":"#081831", "--card-back-border":"#d4af37",
+      "--bg-decor":"radial-gradient(ellipse 100% 60% at 50% 0%, rgba(212,175,55,.12), transparent 60%), linear-gradient(180deg,#163a66 0%,#0a1f3d 45%,#050f1f 100%)",
+    },
+  },
+  macao: {
+    name: "Macao", country: "China", flag: "\u{1F1F2}\u{1F1F4}",
+    decks: 6, hitSoft17: true, bjPayout: 1.2, pT0: 0.20, pGT: 0.68, pGN: 0.28,
+    diff: 4, diffLabel: "Muy difícil",
+    blurb: "El zapato completo: 6 barajas, reglas duras, casa muy afilada.",
+    subtitle: "Blackjack · High Roller Room",
+    theme: {
+      "--felt":"#4a0e0e", "--felt-deep":"#2a0505", "--felt-hi":"#7a1414",
+      "--rail":"#1a0505", "--rail-dark":"#3a0a0a",
+      "--brass":"#e8b923", "--brass-hi":"#ffd700",
+      "--data":"#ff8c5a", "--data-dim":"#b35a30",
+      "--card-back-1":"#7a1414", "--card-back-2":"#4a0e0e", "--card-back-border":"#e8b923",
+      "--bg-decor":"repeating-linear-gradient(45deg, rgba(232,185,35,.06) 0 12px, transparent 12px 24px), radial-gradient(ellipse 120% 70% at 50% 0%, #7a1414 0%, #4a0e0e 45%, #2a0505 100%)",
+    },
+  },
+};
+
 const S = {
+  location: "bogota",
+  numDecks: 1,
+  rules: { hitSoft17:false, bjPayout:1.5 },
   discard: [],
   hands: [],                   // [{cards:[], staked, bust, stood, result, resultMsg, fromSplit}]
   handIndex: 0,
@@ -499,7 +892,14 @@ const S = {
   lastUpdate: null,
 };
 
-function fullDeck(){ const d=[]; for(let r=1;r<=13;r++) for(let s=0;s<4;s++) d.push({r,s}); return d; }
+function fullDeck(){
+  const d=[]; let id=0;
+  for(let dk=0; dk<S.numDecks; dk++)
+    for(let r=1;r<=13;r++)
+      for(let s=0;s<4;s++)
+        d.push({r,s,id:id++});
+  return d;
+}
 
 // cards physically still in the deck (unknown to everyone)
 function physicalRemaining(){
@@ -511,7 +911,7 @@ function physicalRemaining(){
 function unseenRanks(){
   const used = [...S.discard, ...S.hands.flatMap(h => h.cards)];
   S.dealer.forEach((c,i) => { if(S.holeRevealed || i !== 1) used.push(c); });
-  const cnt = {}; for(let r=1;r<=13;r++) cnt[r] = 4;
+  const cnt = {}; for(let r=1;r<=13;r++) cnt[r] = 4*S.numDecks;
   used.forEach(c => cnt[c.r]--);
   const arr = [];
   for(let r=1;r<=13;r++) for(let k=0;k<cnt[r];k++) arr.push(r);
@@ -619,9 +1019,10 @@ function newRoundState(){
   S.hands = []; S.handIndex = 0; S.split = false;
   S.dealer = []; S.holeRevealed = false;
   S.phase = "betting"; S.outcome = null;
-  if(physicalRemaining().length < 15){
+  const reshuffleAt = Math.max(15, 12 * S.numDecks);
+  if(physicalRemaining().length < reshuffleAt){
     S.discard = [];
-    toast("<b>Barajado.</b> La baraja se rehace: las cartas vuelven a estar disponibles.");
+    toast(`<b>Barajado.</b> Se rehace${S.numDecks>1 ? ` el zapato de ${S.numDecks} barajas` : " la baraja"}: las cartas vuelven a estar disponibles.`);
   }
   render();
 }
@@ -726,7 +1127,8 @@ function dealerPlay(){
   const allBust = S.hands.every(h => h.bust);
   const step = () => {
     const h = handTotal(S.dealer);
-    if(!allBust && h.t < 17){
+    const mustHit = h.t < 17 || (h.t === 17 && h.soft && S.rules.hitSoft17);
+    if(!allBust && mustHit){
       S.dealer.push(draw(S.dealerCheating ? S.dealer : null));
       animateDeal();
       render();
@@ -762,7 +1164,10 @@ function resolve(){
     else if(S.qaForce === "win"){ result = "lose"; msg = "[QA] victoria del crupier forzada"; }
     else if(S.qaForce === "lose"){ result = "win"; msg = "[QA] derrota del crupier forzada"; payout = h.staked * 2; }
     else if(d.bust){ result = "win"; msg = "el crupier se pasó"; payout = h.staked * 2; }
-    else if(isNatural && !d.bj){ result = "win"; msg = "¡Blackjack! Paga 3 : 2"; payout = h.staked + Math.floor(h.staked * 1.5); }
+    else if(isNatural && !d.bj){
+      const ratioTxt = S.rules.bjPayout === 1.5 ? "3 : 2" : "6 : 5";
+      result = "win"; msg = `¡Blackjack! Paga ${ratioTxt}`; payout = h.staked + Math.floor(h.staked * S.rules.bjPayout);
+    }
     else if(d.bj && !isNatural){ result = "lose"; msg = "Blackjack del crupier"; }
     else if(p.t > d.t){ result = "win"; msg = `ganas ${p.t} a ${d.t}`; payout = h.staked * 2; }
     else if(p.t < d.t){ result = "lose"; msg = `pierdes ${p.t} a ${d.t}`; }
@@ -1017,10 +1422,11 @@ function renderPanels(){
   }
 
   /* ---- Panel 4: conteo ---- */
+  const deckSize = S.numDecks * 52;
   $("#p4rows").innerHTML = mkRows([
-    ["|E| baraja completa", "52 cartas"],
-    ["Manos iniciales posibles (orden no importa)", `C(52,2) = <span class="hi">${fnum(comb(52,2))}</span>`],
-    ["Repartos ordenados (orden importa)", `V(52,2) = ${fnum(perm(52,2))}`],
+    ["|E| zapato completo", `${deckSize} cartas${S.numDecks>1 ? ` (${S.numDecks} barajas)` : ""}`],
+    ["Manos iniciales posibles (orden no importa)", `C(${deckSize},2) = <span class="hi">${fnum(comb(deckSize,2))}</span>`],
+    ["Repartos ordenados (orden importa)", `V(${deckSize},2) = ${fnum(perm(deckSize,2))}`],
     ["Cartas no vistas ahora (N)", String(N)],
     ["Manos posibles con lo que queda", `C(${N},2) = ${fnum(comb(N,2))}`],
   ]);
@@ -1029,6 +1435,7 @@ function renderPanels(){
     `<span class="step">Ej. loter&iacute;a 5 de 50: C(50,5) = ${fnum(comb(50,5))}.</span>` +
     `<span class="step"><b>Permutaci&oacute;n</b> (importa el orden): V(n,k) = n! / (n&minus;k)!. Ej. V(50,2) = ${fnum(perm(50,2))}.</span>` +
     `<span class="step"><b>Operaciones de conjuntos</b> sobre E=52: A=rojas(26), F=figuras(12), A&#8745;F=6, A&#8746;F=32, A&#7580;=26. P(A)=26/52=50%.</span>` +
+    (S.numDecks>1 ? `<span class="step"><b>&iquest;Por qu&eacute; ${S.numDecks} barajas?</b> M&aacute;s barajas &#8594; |E| crece (${deckSize} cartas) y cada carta individual pesa menos sobre las probabilidades condicionales: el conteo de cartas se vuelve mucho m&aacute;s d&eacute;bil para el jugador. As&iacute; suben la dificultad los casinos reales.</span>` : "") +
     `<span class="step">Sesi&oacute;n: ${S.stats.hands} manos &mdash; ganas ${S.stats.pw}, pierde ${S.stats.dw}, empates ${S.stats.push}.</span>`;
 
   $("#qaParams").innerHTML = mkRows([
@@ -1089,7 +1496,82 @@ function renderControls(){
   });
 }
 
-function render(){ renderTop(); renderHands(); renderControls(); renderPanels(); }
+/* ---------------- Panel 5: convergencia de la simulación de Monte Carlo ---------------- */
+// Corre UNA secuencia de 2000 manos del crupier y va anotando la estimación acumulada
+// en varios "puntos de control" (checkpoints), para poder graficar cómo se estabiliza.
+const MC_CHECKPOINTS = [10,25,50,100,200,350,500,750,1000,1350,1700,2000];
+function mcConvergence(upRank, pool){
+  let bust = 0; const pts = []; let ci = 0;
+  for(let i=1; i<=2000; i++){
+    const h = simDealerTotal(upRank, pool);
+    if(h.bust) bust++;
+    if(MC_CHECKPOINTS[ci] === i){ pts.push({ n:i, p: bust/i }); ci++; }
+  }
+  const finalP = bust/2000;
+  const se = Math.sqrt(Math.max(0, finalP*(1-finalP)) / 2000);
+  return { pts, finalP, se, ciLo: Math.max(0, finalP - 1.96*se), ciHi: Math.min(1, finalP + 1.96*se) };
+}
+function fakeFullPool(exceptRank){
+  // zapato casi completo (numDecks*52 - 1 carta visible), como si acabara de empezar la mesa —
+  // se usa solo como ejemplo ilustrativo cuando todavía no hay mano repartida.
+  const arr = [];
+  const per = 4 * S.numDecks;
+  for(let r=1; r<=13; r++){ const c = (r===exceptRank) ? per-1 : per; for(let k=0;k<c;k++) arr.push(r); }
+  return arr;
+}
+function drawMcChart(svg, pts, finalP){
+  const W=380, H=150, padL=32, padR=8, padT=10, padB=20;
+  const maxP = Math.max(0.08, Math.min(1, Math.max(finalP, ...pts.map(p=>p.p)) * 1.3));
+  const x = n => padL + (n/2000) * (W-padL-padR);
+  const y = p => (H-padB) - (p/maxP) * (H-padT-padB);
+  const path = pts.map((p,i) => `${i===0?"M":"L"}${x(p.n).toFixed(1)},${y(p.p).toFixed(1)}`).join(" ");
+  const dots = pts.map(p => `<circle class="pt" cx="${x(p.n).toFixed(1)}" cy="${y(p.p).toFixed(1)}" r="2.1"/>`).join("");
+  const dashY = y(finalP).toFixed(1);
+  svg.innerHTML = `
+    <line class="axis" x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}"/>
+    <line class="axis" x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}"/>
+    <line class="ref" x1="${padL}" y1="${dashY}" x2="${W-padR}" y2="${dashY}"/>
+    <path class="curve" d="${path}"/>
+    ${dots}
+    <text x="${padL}" y="${padT-1}">P(pasa)</text>
+    <text x="${(padL+W-padR)/2}" y="${H-4}" text-anchor="middle">tama&#241;o de la muestra (n&#8594;2000 manos simuladas)</text>
+    <text class="final-lbl" x="${W-padR}" y="${Math.max(12, (+dashY)-4)}" text-anchor="end">${pct(finalP)} con n=2000</text>
+    <text x="${padL}" y="${H-padB+13}">0</text>
+    <text x="${W-padR}" y="${H-padB+13}" text-anchor="end">2000</text>
+  `;
+}
+function renderMonteCarlo(){
+  const svg = $("#mcChart");
+  if(!svg) return;
+  let upRank, pool, scenario;
+  if(S.dealer.length){
+    upRank = S.dealer[0].r;
+    pool = unseenRanks();
+    scenario = `mano en curso &mdash; carta visible del crupier: <b>${rankLabel(upRank)}${SUITS[S.dealer[0].s]}</b>, N = ${pool.length} cartas no vistas`;
+  } else {
+    upRank = 10;
+    pool = fakeFullPool(upRank);
+    scenario = `ejemplo ilustrativo (a&uacute;n no hay mano repartida) &mdash; crupier muestra una figura, mazo casi completo, N = ${pool.length}`;
+  }
+  const mc = mcConvergence(upRank, pool);
+  drawMcChart(svg, mc.pts, mc.finalP);
+  $("#mcRows").innerHTML = mkRows([
+    ["Escenario simulado", scenario],
+    ["Manos de crupier simuladas", "n = 2 000"],
+    ["Estimaci&oacute;n de P(crupier se pasa)", `<span class="hi">${pct(mc.finalP)}</span>`],
+  ]);
+  $("#mcCI").innerHTML =
+    `Error est&aacute;ndar SE = &radic;[p&middot;(1&minus;p)/n] = <b>${pct(mc.se)}</b> &nbsp;&middot;&nbsp; ` +
+    `Intervalo de confianza 95% &asymp; estimaci&oacute;n &plusmn; 1.96&middot;SE = <b>[${pct(mc.ciLo)} , ${pct(mc.ciHi)}]</b>`;
+  $("#mcDeriv").innerHTML =
+    `<span class="step"><b>¿Qué hace la simulación?</b> Le reparte al crupier 2000 manos independientes (cada una: baraja las cartas no vistas, juega la regla "pide hasta 17") y guarda cuántas de esas manos terminan en más de 21.</span>` +
+    `<span class="step"><b>¿Por qué n = 2000 y no una fórmula?</b> El número de cartas que pedirá el crupier es aleatorio (puede plantarse a la 2ª carta o pedir 4 veces), así que enumerar todos los caminos a mano es engorroso. Simular muchas manos y contar la frecuencia relativa es más simple y converge al mismo valor.</span>` +
+    `<span class="step"><b>La gráfica</b> es la propia P(crupier se pasa) recalculada después de cada bloque de manos: al principio salta mucho (con 10–50 manos el azar pesa), y se va aplanando hacia la línea dorada — así se ve la <i>ley de los grandes números</i> en acción.</span>` +
+    `<span class="step"><b>¿Qué tan preciso es?</b> Con n=2000 y p≈${mc.finalP.toFixed(2)}, el error estándar es de apenas ${pct(mc.se)}: el verdadero valor casi seguro (95%) cae dentro de ${pct(1.96*mc.se)} del número que ves arriba. Duplicar n solo reduce el error en un factor √2 — por eso 2000 es un punto dulce entre precisión y velocidad del navegador.</span>`;
+}
+$("#mcRun") && $("#mcRun").addEventListener("click", renderMonteCarlo);
+
+function render(){ renderTop(); renderHands(); renderControls(); renderPanels(); renderMonteCarlo(); }
 
 /* ---------------- events ---------------- */
 $("#bDeal").addEventListener("click", () => { if(S.phase === "resolved") newRoundState(); else deal(); });
@@ -1124,7 +1606,7 @@ document.querySelectorAll("[data-qa]").forEach(b => b.addEventListener("click", 
   if(a === "forceWin"){ S.qaForce = "win"; toast("[QA] La próxima mano la gana el crupier."); }
   if(a === "forceLose"){ S.qaForce = "lose"; toast("[QA] La próxima mano la pierde el crupier."); }
   if(a === "shuffle"){ S.discard = []; toast("[QA] Baraja rehecha."); }
-  if(a === "reset"){ Object.assign(S, { discard:[], hands:[], handIndex:0, split:false, dealer:[], holeRevealed:false, phase:"betting", chips:1000, pot:0, pT:0.10, dealerCheating:Math.random()<0.10, qaForce:null, stats:{hands:0,pw:0,dw:0,push:0}, lastUpdate:null }); }
+  if(a === "reset"){ Object.assign(S, { discard:[], hands:[], handIndex:0, split:false, dealer:[], holeRevealed:false, phase:"betting", chips:1000, pot:0, pT:S.params.pT0, dealerCheating:Math.random()<S.params.pT0, qaForce:null, stats:{hands:0,pw:0,dw:0,push:0}, lastUpdate:null }); }
   render();
 }));
 
@@ -1145,5 +1627,359 @@ function toast(html){
   toastT = setTimeout(() => t.classList.remove("show"), 5200);
 }
 
-render();
+/* ---------------- destinos: construir la barra y aplicar el cambio ---------------- */
+function diffDots(diff){
+  let out = "";
+  for(let i=1;i<=4;i++) out += `<i class="${i<=diff?"on":""}">${i<=diff?"●":"○"}</i>`;
+  return out;
+}
+function buildLocBar(){
+  const row = $("#locRow");
+  row.innerHTML = Object.entries(LOCATIONS).map(([id, loc]) => `
+    <button class="locbtn" data-loc="${id}" aria-pressed="${id===S.location}" title="${loc.blurb}">
+      <div class="lname"><span class="lflag">${loc.flag}</span>${loc.name}</div>
+      <div class="lmeta"><span>${loc.decks} baraja${loc.decks>1?"s":""}</span><span class="ldots">${diffDots(loc.diff)}</span></div>
+      <div class="lblurb">${loc.blurb}</div>
+    </button>
+  `).join("");
+  row.querySelectorAll("[data-loc]").forEach(b => b.addEventListener("click", () => applyLocation(b.dataset.loc)));
+}
+function applyLocation(id){
+  const loc = LOCATIONS[id];
+  if(!loc) return;
+  if(S.phase === "player" || S.phase === "dealer"){
+    toast("Termina la mano actual antes de cambiar de casino.");
+    return;
+  }
+  S.location = id;
+  S.numDecks = loc.decks;
+  S.rules = { hitSoft17: loc.hitSoft17, bjPayout: loc.bjPayout };
+  S.params = { pT0: loc.pT0, pGT: loc.pGT, pGN: loc.pGN };
+  S.pT = loc.pT0;
+  S.dealerCheating = Math.random() < loc.pT0;
+  S.lastUpdate = null;
+  S.qaForce = null;
+  S.discard = []; S.hands = []; S.handIndex = 0; S.split = false;
+  S.dealer = []; S.holeRevealed = false; S.phase = "betting"; S.outcome = null;
+  S.stats = { hands:0, pw:0, dw:0, push:0 };
+
+  // piel visual: pisa las variables CSS en :root
+  const root = document.documentElement.style;
+  Object.entries(loc.theme).forEach(([k,v]) => root.setProperty(k, v));
+  document.body.setAttribute("data-loc", id);
+
+  $("#brandTitle").textContent = id === "bogota" ? "Contra la Casa" : `Contra la Casa · ${loc.name}`;
+  $("#brandSub").textContent = loc.subtitle;
+  $("#dealerRule").textContent = loc.hitSoft17 ? "pide en 17 suave" : "se planta en 17";
+  const ratioTxt = loc.bjPayout === 1.5 ? "3 : 2" : "6 : 5";
+  $("#feltLine").innerHTML = `Blackjack paga ${ratioTxt} &nbsp;&bull;&nbsp; ${loc.decks} baraja${loc.decks>1?"s":""} &middot; ${loc.diffLabel}`;
+
+  row_updatePressed();
+  toast(`<b>${loc.flag} ${loc.name}, ${loc.country}.</b> ${loc.blurb} Dificultad: <b>${loc.diffLabel}</b> (previa de crupier tramposo: ${pct(loc.pT0)}).`);
+  render();
+}
+function row_updatePressed(){
+  document.querySelectorAll("#locRow [data-loc]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.loc === S.location)));
+}
+
+buildLocBar();
+applyLocation("bogota");
+
+/* =========================================================================
+   ACADEMIA — principio de conteo, árboles, permutaciones/combinaciones,
+   probabilidad total y Bayes. Ejercicios tomados del documento de clase.
+   ========================================================================= */
+(function academia(){
+  "use strict";
+
+  /* ---------------- tabs: Mesa / Academia ---------------- */
+  $("#tabMesa").addEventListener("click", () => switchMain("mesa"));
+  $("#tabAcademia").addEventListener("click", () => switchMain("academia"));
+  function switchMain(which){
+    const mesa = which === "mesa";
+    $("#viewMesa").hidden = !mesa;
+    $("#viewAcademia").hidden = mesa;
+    $("#tabMesa").setAttribute("aria-selected", String(mesa));
+    $("#tabAcademia").setAttribute("aria-selected", String(!mesa));
+  }
+
+  const acTabs = { conteo: $("#acTabConteo"), perm: $("#acTabPerm"), bayes: $("#acTabBayes") };
+  const acSecs = { conteo: $("#acSecConteo"), perm: $("#acSecPerm"), bayes: $("#acSecBayes") };
+  Object.keys(acTabs).forEach(k => acTabs[k].addEventListener("click", () => switchAcad(k)));
+  function switchAcad(which){
+    Object.keys(acTabs).forEach(k => {
+      acSecs[k].hidden = k !== which;
+      acTabs[k].setAttribute("aria-selected", String(k === which));
+    });
+  }
+
+  /* ---------------- progress tracking (localStorage, por navegador) ---------------- */
+  const PKEY = "contraLaCasaAcademiaProgress";
+  let solved = new Set();
+  try{ solved = new Set(JSON.parse(localStorage.getItem(PKEY) || "[]")); }catch(e){ solved = new Set(); }
+  const TOTAL = 16;
+  function markSolved(id, cardEl){
+    if(!solved.has(id)){
+      solved.add(id);
+      try{ localStorage.setItem(PKEY, JSON.stringify([...solved])); }catch(e){}
+    }
+    cardEl.classList.add("solved");
+    updateProgress();
+  }
+  function updateProgress(){
+    const n = Math.min(solved.size, TOTAL);
+    $("#progCount").textContent = String(n);
+    $("#progTotal").textContent = String(TOTAL);
+    $("#progFill").style.width = Math.round(100 * n / TOTAL) + "%";
+    $("#acadPip").textContent = `${n}/${TOTAL}`;
+  }
+
+  /* ---------------- generic exercise card ---------------- */
+  // cfg: {id, tema, enun, answer, tol, unit, hint, solutionHTML}
+  function mkCard(cfg){
+    const card = document.createElement("div");
+    card.className = "acad-card";
+    card.innerHTML = `
+      <div class="tema">${cfg.tema}</div>
+      <h4>${cfg.title || ""}</h4>
+      <p class="enun">${cfg.enun}</p>
+      <div class="acad-form">
+        <input type="text" inputmode="decimal" placeholder="${cfg.placeholder || "tu respuesta"}" aria-label="respuesta">
+        <button class="btn" data-act="check">Comprobar</button>
+        <button class="btn" data-act="reveal">Ver soluci&oacute;n</button>
+      </div>
+      <div class="acad-feedback"></div>
+      <div class="acad-sol">${cfg.solutionHTML}</div>
+    `;
+    const input = card.querySelector("input");
+    const fb = card.querySelector(".acad-feedback");
+    const sol = card.querySelector(".acad-sol");
+    if(solved.has(cfg.id)) card.classList.add("solved");
+
+    function parseNum(s){
+      s = s.trim().replace(/%/g, "").replace(/\./g, "").replace(/,/g, ".");
+      // if the user used '.' as decimal (not thousands), fall back
+      if(isNaN(parseFloat(s))){
+        s = s.trim().replace(/%/g, "").replace(/,/g, "");
+      }
+      return parseFloat(s);
+    }
+    card.querySelector('[data-act="check"]').addEventListener("click", () => {
+      const raw = input.value.trim();
+      if(!raw){ fb.className = "acad-feedback bad"; fb.textContent = "Escribe un número antes de comprobar."; return; }
+      let v = parseFloat(raw.replace(",", "."));
+      if(isNaN(v)) v = parseNum(raw);
+      const ok = !isNaN(v) && Math.abs(v - cfg.answer) <= cfg.tol;
+      if(ok){
+        fb.className = "acad-feedback ok";
+        fb.textContent = `Correcto — ${cfg.answerLabel || (cfg.answer + (cfg.unit||""))}. ${cfg.congrats||""}`;
+        markSolved(cfg.id, card);
+      } else {
+        fb.className = "acad-feedback bad";
+        fb.textContent = "Todavía no. Revisa la partición / el espacio muestral e inténtalo de nuevo (o pulsa «Ver solución»).";
+      }
+    });
+    card.querySelector('[data-act="reveal"]').addEventListener("click", (e) => {
+      sol.classList.toggle("show");
+      e.currentTarget.textContent = sol.classList.contains("show") ? "Ocultar solución" : "Ver solución";
+    });
+    input.addEventListener("keydown", e => { if(e.key === "Enter") card.querySelector('[data-act="check"]').click(); });
+    return card;
+  }
+
+  /* ================= SECCIÓN 1 · Principio de conteo ================= */
+  const PRESETS = {
+    placas: [["Letra",26],["Letra",26],["Dígito",10],["Dígito",10],["Dígito",10]],
+    dadomoneda: [["Dado",6],["Moneda",2]],
+    casa: [["Fachada",4],["Plano",3]],
+    clear: [["Etapa 1",2],["Etapa 2",2]],
+  };
+  let steps = PRESETS.placas.map(([l,v]) => ({l,v}));
+
+  function renderCounter(){
+    const row = $("#counterRow");
+    row.innerHTML = steps.map((s,i) => `
+      <div class="counter-step">
+        <label>${s.l}<span style="cursor:pointer;color:var(--lose)" data-del="${i}"> &times;</span></label>
+        <input type="number" min="0" value="${s.v}" data-idx="${i}">
+      </div>
+      ${i < steps.length-1 ? '<span class="counter-op">&times;</span>' : ""}
+    `).join("") + `<button class="btn" id="counterAdd" style="padding:6px 10px;font-size:12px">+ etapa</button>`;
+    row.querySelectorAll("input[data-idx]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        steps[Number(inp.dataset.idx)].v = Math.max(0, Number(inp.value) || 0);
+        computeCounter();
+      });
+    });
+    row.querySelectorAll("[data-del]").forEach(x => x.addEventListener("click", () => {
+      if(steps.length <= 1) return;
+      steps.splice(Number(x.dataset.del), 1);
+      renderCounter(); computeCounter();
+    }));
+    $("#counterAdd").addEventListener("click", () => {
+      if(steps.length >= 7) return;
+      steps.push({ l: "Etapa " + (steps.length+1), v: 2 });
+      renderCounter(); computeCounter();
+    });
+    computeCounter();
+  }
+  function computeCounter(){
+    const n = steps.map(s=>s.v);
+    const N = n.reduce((a,b)=>a*b, 1);
+    $("#counterResult").textContent = fnum(N);
+    $("#counterDeriv").innerHTML =
+      `<span class="step"><b>N</b> = ${n.join(" × ")} = <b>${fnum(N)}</b></span>` +
+      `<span class="step">Cada etapa aporta un factor independiente de las demás: el principio fundamental del conteo multiplica las opciones de cada una.</span>`;
+  }
+  document.querySelectorAll(".counter-preset [data-preset]").forEach(b => b.addEventListener("click", () => {
+    steps = PRESETS[b.dataset.preset].map(([l,v]) => ({l,v}));
+    renderCounter();
+  }));
+  renderCounter();
+
+  /* ---- diagrama de árbol (facultades / género) ---- */
+  const TREE_P = { F:[0.5,0.25,0.25], M:0.6, H:0.4 };
+  function buildBigTree(mode){
+    const svg = $("#bigTree");
+    const fy = [40,115,190];
+    const my = [20,60,100,130,170,210];
+    let paths = "", nodes = "";
+    const hotRoot = new Set(); // indices of F branches to highlight from root
+    const hotLeaf = new Set(); // indices 0..5 (F1M,F1H,F2M,F2H,F3M,F3H) to highlight
+    if(mode === "mujer"){ [0,1,2].forEach(i=>hotRoot.add(i)); [0,2,4].forEach(i=>hotLeaf.add(i)); }
+    if(mode === "hombre1"){ hotRoot.add(0); hotLeaf.add(1); }
+
+    for(let i=0;i<3;i++){
+      paths += `<path d="M20,115 L180,${fy[i]}" class="${hotRoot.has(i)?'hot':''}"/>`;
+      nodes += `<text x="184" y="${fy[i]-4}" class="node">Facultad ${i+1}</text>`;
+      nodes += `<text x="90" y="${(115+fy[i])/2 - 6}">${TREE_P.F[i]}</text>`;
+      const mIdx = i*2, hIdx = i*2+1;
+      paths += `<path d="M235,${fy[i]} L380,${my[mIdx]}" class="${hotLeaf.has(mIdx)?'hot':''}"/>`;
+      paths += `<path d="M235,${fy[i]} L380,${my[hIdx]}" class="${hotLeaf.has(hIdx)?'hot':''}"/>`;
+      nodes += `<text x="384" y="${my[mIdx]-3}" class="node">Mujer</text>`;
+      nodes += `<text x="300" y="${(fy[i]+my[mIdx])/2 - 5}">${TREE_P.M}</text>`;
+      nodes += `<text x="384" y="${my[hIdx]+11}" class="node">Hombre</text>`;
+      nodes += `<text x="300" y="${(fy[i]+my[hIdx])/2 + 12}">${TREE_P.H}</text>`;
+      const pM = (TREE_P.F[i]*TREE_P.M).toFixed(3), pH = (TREE_P.F[i]*TREE_P.H).toFixed(3);
+      nodes += `<text x="470" y="${my[mIdx]-3}" class="prod">${TREE_P.F[i]}×${TREE_P.M}=${pM}</text>`;
+      nodes += `<text x="470" y="${my[hIdx]+11}" class="prod">${TREE_P.F[i]}×${TREE_P.H}=${pH}</text>`;
+    }
+    svg.innerHTML = `<text x="0" y="119" class="node">Aspirante</text>` + paths + nodes;
+
+    const dv = $("#treeDeriv");
+    if(mode === "mujer"){
+      const terms = TREE_P.F.map(f => (f*TREE_P.M));
+      dv.innerHTML = `<span class="step">P(Mujer) = Σ P(Facultadᵢ)·P(Mujer|Facultadᵢ)</span>` +
+        `<span class="step">= ${TREE_P.F.map((f,i)=>`${f}×${TREE_P.M}`).join(" + ")} = ${terms.map(t=>t.toFixed(2)).join(" + ")} = <b>${terms.reduce((a,b)=>a+b,0).toFixed(2)}</b></span>` +
+        `<span class="step">Es la <b>probabilidad total</b>: sumar cada rama que termina en "Mujer" sobre la partición de facultades.</span>`;
+    } else if(mode === "hombre1"){
+      const p = TREE_P.F[0]*TREE_P.H;
+      dv.innerHTML = `<span class="step">P(Facultad 1 ∩ Hombre) = P(Facultad 1)·P(Hombre|Facultad 1) = ${TREE_P.F[0]} × ${TREE_P.H} = <b>${p.toFixed(2)}</b></span>` +
+        `<span class="step">Una sola rama del árbol: se multiplica a lo largo del camino (principio de conteo aplicado a probabilidades encadenadas).</span>`;
+    } else {
+      dv.innerHTML = `<span class="step">Cada camino raíz→hoja se calcula multiplicando las probabilidades de sus ramas. Pulsa un botón para resaltar un cálculo.</span>`;
+    }
+  }
+  document.querySelectorAll(".tree-controls [data-tree]").forEach(b => b.addEventListener("click", () => buildBigTree(b.dataset.tree)));
+  buildBigTree("none");
+
+  /* ================= extra: 4 ejercicios de conteo (multiplicación) ================= */
+  const conteoCard = document.createElement("div");
+  conteoCard.className = "acad-grid";
+  conteoCard.style.marginTop = "14px";
+  $("#acSecConteo").appendChild(conteoCard);
+  [
+    { id:"c1", tema:"Principio de conteo", title:"Placas de Bogotá",
+      enun:"¿Cuántas placas diferentes existen si la estructura es letra, letra, dígito, dígito, dígito?",
+      answer:676000, tol:0, unit:"",
+      solutionHTML:`<span class="step">N = 26 (letra) × 26 (letra) × 10 × 10 × 10 (dígitos)</span><span class="step">= 676 × 1000 = <b>676 000</b></span>` },
+    { id:"c2", tema:"Principio de conteo", title:"Dado y moneda",
+      enun:"Se lanzan un dado y una moneda. ¿Cuántos resultados posibles hay en total?",
+      answer:12, tol:0,
+      solutionHTML:`<span class="step">N = 6 (dado) × 2 (moneda) = <b>12</b></span>` },
+    { id:"c3", tema:"Principio de conteo", title:"Casa del urbanista",
+      enun:"4 estilos de fachada (Tudor, rústica, colonial, tradicional) y 3 planos (una planta, dos pisos, desniveles). ¿En cuántas formas puede un comprador ordenar una casa?",
+      answer:12, tol:0,
+      solutionHTML:`<span class="step">N = 4 (fachada) × 3 (plano) = <b>12</b></span>` },
+    { id:"c4", tema:"Principio de conteo", title:"Clave de acceso",
+      enun:"Una clave tiene 2 letras distintas entre sí (sin repetir) seguidas de 2 dígitos (los dígitos sí pueden repetirse). ¿Cuántas claves distintas existen?",
+      answer:65000, tol:0,
+      solutionHTML:`<span class="step">Letras sin repetir: 26 × 25 = 650 (la 2.ª letra ya no puede ser igual a la 1.ª)</span><span class="step">Dígitos con repetición: 10 × 10 = 100</span><span class="step">N = 650 × 100 = <b>65 000</b></span>` },
+  ].forEach(cfg => conteoCard.appendChild(mkCard(cfg)));
+
+  /* ================= SECCIÓN 2 · Permutaciones y combinaciones ================= */
+  const permGrid = $("#permGrid");
+  [
+    { id:"p1", tema:"Permutación V(n,r)", title:"Premios de posgrado",
+      enun:"Se otorgará uno de tres premios distintos (investigación, enseñanza, servicio) entre 25 estudiantes; cada estudiante recibe como máximo un premio. ¿Cuántas selecciones posibles hay?",
+      answer:13800, tol:0,
+      solutionHTML:`<span class="step">Los 3 premios son distintos → importa el orden (quién recibe cuál): es una permutación.</span><span class="step">V(25,3) = 25!/(25-3)! = 25 × 24 × 23 = <b>13 800</b></span>` },
+    { id:"p2", tema:"Permutación V(n,r)", title:"Club estudiantil",
+      enun:"En un club de 50 personas se eligen presidente y tesorero (cargos distintos). ¿De cuántas maneras se pueden elegir los funcionarios?",
+      answer:2450, tol:0,
+      solutionHTML:`<span class="step">Presidente y tesorero son roles distintos → permutación.</span><span class="step">V(50,2) = 50 × 49 = <b>2 450</b></span>` },
+    { id:"p3", tema:"Permutación V(n,r)", title:"Conferencia de programadores",
+      enun:"5 expositores compiten por oro, plata y bronce (3 primeros lugares). ¿De cuántas maneras distintas se pueden premiar?",
+      answer:60, tol:0,
+      solutionHTML:`<span class="step">Oro, plata y bronce son posiciones distintas → permutación.</span><span class="step">V(5,3) = 5 × 4 × 3 = <b>60</b></span>` },
+    { id:"p4", tema:"Combinación C(n,r)", title:"Muestra de la base de datos",
+      enun:"De 100 usuarios se eligen 5 al azar para entrevistas (el orden de selección no importa). ¿De cuántas maneras se pueden elegir?",
+      answer:75287520, tol:0,
+      solutionHTML:`<span class="step">No importa el orden de selección → combinación.</span><span class="step">C(100,5) = 100!/[5!·95!] = <b>75 287 520</b></span>` },
+    { id:"p5", tema:"Combinación C(n,r)", title:"Batido de frutas",
+      enun:"Un bar tiene 10 frutas diferentes y elige 3 para un batido (sin orden). ¿De cuántas maneras puede hacerse la elección?",
+      answer:120, tol:0,
+      solutionHTML:`<span class="step">Combinación: C(10,3) = 10!/[3!·7!] = (10×9×8)/(3×2×1) = <b>120</b></span>` },
+    { id:"p6", tema:"Combinación C(n,r)", title:"Muestra de un curso",
+      enun:"De un curso de 20 estudiantes se toma una muestra de 5 para un test de aptitud. ¿De cuántas formas puede tomarse la muestra?",
+      answer:15504, tol:0,
+      solutionHTML:`<span class="step">C(20,5) = 20!/[5!·15!] = <b>15 504</b></span>` },
+    { id:"p7", tema:"Combinación compuesta", title:"Cartuchos de Game Boy",
+      enun:"De una colección de 10 juegos recreativos y 5 de deportes, ¿de cuántas maneras se pueden llevar 3 recreativos y 2 de deportes?",
+      answer:1200, tol:0,
+      solutionHTML:`<span class="step">C(10,3) × C(5,2) = 120 × 10 = <b>1 200</b></span><span class="step">Se combinan dos selecciones independientes: el principio de conteo multiplica los conteos de cada grupo.</span>` },
+    { id:"p8", tema:"Combinación C(n,r)", title:"Preguntas de evaluación",
+      enun:"Un estudiante elige 7 de 10 preguntas para un examen (sin orden). ¿De cuántas maneras puede elegirlas?",
+      answer:120, tol:0,
+      solutionHTML:`<span class="step">C(10,7) = C(10,3) = <b>120</b></span><span class="step">Si las 4 primeras fueran obligatorias: quedaría elegir 3 de las 6 restantes → C(6,3) = <b>20</b>.</span>` },
+  ].forEach(cfg => permGrid.appendChild(mkCard(cfg)));
+
+  /* ================= SECCIÓN 3 · Probabilidad total y Bayes ================= */
+  const bayesGrid = $("#bayesGrid");
+  [
+    { id:"b1", tema:"Probabilidad total", title:"Lotes de 3 proveedores",
+      enun:"Una empresa recibe lotes de 3 proveedores en proporciones 50%, 30%, 20%. Se rechaza el 0.1%, 0.5% y 1% de sus lotes respectivamente. Si un lote fue rechazado, ¿cuál es la probabilidad de que sea del proveedor 3? (responde en %)",
+      answer:50, tol:1, unit:"%",
+      solutionHTML:
+        `<span class="step">Partición: P(B₁)=0.50, P(B₂)=0.30, P(B₃)=0.20</span>` +
+        `<span class="step">P(Rechazado|B₁)=0.001, P(Rechazado|B₂)=0.005, P(Rechazado|B₃)=0.01</span>` +
+        `<span class="step">P(Rechazado) = .5×.001 + .3×.005 + .2×.01 = .0005+.0015+.002 = <b>.004</b> &nbsp;(probabilidad total)</span>` +
+        `<span class="step">P(B₃|Rechazado) = (.2×.01)/.004 = .002/.004 = <b>0.50 = 50%</b> &nbsp;(Bayes)</span>` },
+    { id:"b2", tema:"Probabilidad total", title:"Cirugías estéticas",
+      enun:"20% correcciones faciales, 35% liposucción, 45% otras cirugías. Son hombres el 25%, 15% y 40% respectivamente (por tanto mujeres: 75%, 85%, 60%). Si un paciente elegido al azar es mujer, ¿cuál es la probabilidad de que se haya hecho liposucción? (en %)",
+      answer:41.46, tol:1, unit:"%",
+      solutionHTML:
+        `<span class="step">P(facial)=.20, P(lipo)=.35, P(otras)=.45</span>` +
+        `<span class="step">P(Mujer|facial)=.75, P(Mujer|lipo)=.85, P(Mujer|otras)=.60</span>` +
+        `<span class="step">P(Mujer) = .20×.75+.35×.85+.45×.60 = .15+.2975+.27 = <b>.7175</b></span>` +
+        `<span class="step">P(lipo|Mujer) = .2975/.7175 = <b>0.4146 ≈ 41.46%</b></span>` },
+    { id:"b3", tema:"Probabilidad total", title:"Accidentes de tránsito",
+      enun:"65% de los accidentes se deben a alcohol, 25% a imprudencia, 10% a otras causas. El resultado es nefasto el 30%, 20% y 5% de las veces respectivamente. Si un accidente NO tuvo resultado nefasto, ¿cuál es la probabilidad de que la causa haya sido el alcohol? (en %)",
+      answer:60.67, tol:1, unit:"%",
+      solutionHTML:
+        `<span class="step">P(alcohol)=.65, P(imprudencia)=.25, P(otras)=.10</span>` +
+        `<span class="step">P(no nefasto|alcohol)=.70, P(no nefasto|imprudencia)=.80, P(no nefasto|otras)=.95</span>` +
+        `<span class="step">P(no nefasto) = .65×.70+.25×.80+.10×.95 = .455+.20+.095 = <b>.75</b></span>` +
+        `<span class="step">P(alcohol|no nefasto) = .455/.75 = <b>0.6067 ≈ 60.67%</b></span>` },
+    { id:"b4", tema:"Bayes", title:"Los tres llaveros",
+      enun:"Tres llaveros A (5 llaves), B (7 llaves), C (8 llaves); sólo una llave de cada llavero abre el garaje. Se escoge un llavero al azar y luego una llave al azar de él, y esa llave abre la puerta. ¿Cuál es la probabilidad de que el llavero haya sido el B? (en %)",
+      answer:30.54, tol:1.2, unit:"%",
+      solutionHTML:
+        `<span class="step">P(A)=P(B)=P(C)=1/3. P(abre|A)=1/5, P(abre|B)=1/7, P(abre|C)=1/8</span>` +
+        `<span class="step">P(abre) = (1/3)(1/5+1/7+1/8) = (1/3)(0.2+0.1429+0.125) = (1/3)(0.4679) = <b>0.1560</b></span>` +
+        `<span class="step">P(B|abre) = (1/3×1/7)/0.1560 = 0.04762/0.1560 = <b>0.3054 ≈ 30.54%</b></span>` },
+  ].forEach(cfg => bayesGrid.appendChild(mkCard(cfg)));
+
+  updateProgress();
+})();
 </script>
