@@ -329,35 +329,34 @@ que explica y visualiza la simulación en vez de solo nombrarla:
 
 ---
 
-## 12. Casinos del mundo — sedes con dificultad y piel visual (ampliación)
+## 12. Casinos del mundo — sedes con piel visual (ampliación)
 
-El pedido final fue darle "un plus visual": que el jugador pueda elegir dónde juega y que ese cambio
-sea real, no cosmético. Se agregó una barra **«Elige tu casino»** debajo del encabezado con 4 sedes,
-cada una atada a valores concretos del motor — no solo a un color distinto:
+El pedido fue darle "un plus visual": que el jugador pueda elegir dónde juega. Se agregó una barra
+**«Elige tu casino»** debajo del encabezado con 4 sedes — 🇨🇴 Bogotá, 🇺🇸 Las Vegas, 🇲🇨 Montecarlo,
+🇲🇴 Macao. Pasó por dos iteraciones:
 
-| Sede | Barajas | Crupier pide en 17 suave | Blackjack paga | P(Tramposo) previa | Dificultad |
-|---|---|---|---|---|---|
-| 🇨🇴 Bogotá | 1 | No | 3 : 2 | 10 % | Fácil |
-| 🇺🇸 Las Vegas | 2 | No | 3 : 2 | 12 % | Medio |
-| 🇲🇨 Montecarlo | 4 | Sí | 6 : 5 | 15 % | Difícil |
-| 🇲🇴 Macao | 6 | Sí | 6 : 5 | 20 % | Muy difícil |
+1. Primera versión: cada sede ataba reglas distintas (más barajas, crupier pide en 17 suave,
+   blackjack paga 6:5, previa `P(Tramposo)` más alta) para simular "dificultad".
+2. Se pidió quitar la dificultad y dejar solo el cambio de lugar — las 4 sedes pasaron a compartir
+   exactamente las mismas reglas (`decks:1, hitSoft17:false, bjPayout:1.5`) y, en ese momento,
+   también la misma previa `P(T)=0.10`.
+3. Se pidió después **reintroducir una variación, pero solo en la previa de Bayes**, para que el
+   Panel 3 (Teorema de Bayes) sea el protagonista del cambio de sede en vez de las reglas de juego:
 
-Cada palanca es una regla **real** de casinos físicos, elegida porque además refuerza un tema del
-curso ya presente en el HUD:
+   | Sede | `pT0` (previa) | `trustLabel` |
+   |---|---|---|
+   | Bogotá | 0.10 | Confiable |
+   | Las Vegas | 0.18 | Vigilada |
+   | Montecarlo | 0.28 | Sospechosa |
+   | Macao | 0.40 | Muy sospechosa |
 
-- **Más barajas en el zapato** (`S.numDecks`): diluye la ventaja del conteo de cartas — con 6 barajas
-  el espacio muestral `|E|` crece a 312 y cada carta individual pesa mucho menos sobre las
-  probabilidades condicionales de los Paneles 2 y 4. Obligó a rediseñar `fullDeck()` para asignar un
-  `id` secuencial único por carta (antes `r*4+s` bastaba para identificar una carta porque solo había
-  una baraja; con varias barajas, la misma combinación rango+palo aparece varias veces en el zapato,
-  así que el identificador de "ya vista" tenía que ser por carta física, no por combinación).
-- **El crupier pide en 17 "suave"** (as+6, `hitSoft17`): regla real que sube la ventaja de la casa
-  porque el crupier arriesga más veces en vez de plantarse. Cambia `dealerPlay()`.
-- **Blackjack paga 6 : 5 en vez de 3 : 2** (`rules.bjPayout`): también real (mesas de pago reducido) y
-  empeora el retorno esperado del jugador sin tocar ninguna probabilidad — es puramente el pago.
-- **`P(Tramposo)` previa más alta**: no es una regla real de casino, es narrativa — "sedes más duras
-  desconfían más" — pero conecta directo con el Teorema de Bayes del Panel 3: el jurado puede ver
-  cómo cambia el posterior partiendo de previas distintas según la sede.
+   Las verosimilitudes `pGT=0.60` y `pGN=0.30` se mantienen iguales en las 4 sedes a propósito: al
+   aislar la previa como única variable, el jugador puede comparar sedes y ver que es el Teorema de
+   Bayes (previa × verosimilitud) el que mueve el posterior, no un cambio de reglas. La tarjeta de
+   cada sede muestra en vivo `P(Tramposo) previa: X%` y su `trustLabel`; el toast al cambiar de sede
+   repite el dato; y el `sust-hint` del Panel 3 explica explícitamente que la previa cambia según la
+   sede e invita a comparar. Se mantiene el motor multi-baraja (`S.numDecks`, `fullDeck()` con `id`
+   único por carta) sin usar (todas las sedes fijan `decks:1`), por si se retoma en el futuro.
 
 No se usan marcas ni nombres de casinos reales (Caesars, Bellagio, etc.), solo ciudades/países, para
 evitar cualquier problema de marca — es tematización genérica, no una afirmación de afiliación.
@@ -373,10 +372,10 @@ documento, lo resuelve de raíz). Cada sede además tiene un par de detalles fin
 rayas rojas y dorado en Macao) para que la piel se sienta distinta sin duplicar HTML.
 
 **Guardas de estado**: no se puede cambiar de sede a mitad de una mano (`S.phase !== "bet"` bloquea el
-clic y muestra un toast pidiendo terminar la mano); cambiar de sede reinicia el zapato, las fichas y
-el posterior de Bayes a la previa de la nueva sede, y se avisa con un toast. El Panel 4 y el pie de
-página muestran el nombre de la sede y el tamaño del zapato en vivo para que quede claro qué reglas
-están activas.
+clic y muestra un toast pidiendo terminar la mano); cambiar de sede reinicia la mano y el posterior de
+Bayes a la previa de esa sede (`S.pT = loc.pT0`, distinta por sede), y se avisa con un toast que ya
+incluye el nuevo `P(Tramposo)`. El pie de página sigue mostrando "Blackjack paga 3:2 · 1 baraja" en
+cualquier sede, para que quede claro que las reglas de juego no cambian — solo la previa de Bayes.
 
 ---
 

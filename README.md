@@ -13,8 +13,8 @@ conteo, un diagrama de árbol explorable y 16 ejercicios resueltos del documento
 validación de respuesta. Ver «La Academia» más abajo.
 
 Además puedes **elegir en qué casino del mundo juegas** — Bogotá, Las Vegas, Montecarlo o Macao —
-cada uno con su propia piel visual y reglas reales de casino que suben la dificultad. Ver «Los
-casinos del mundo» más abajo.
+cada uno con su propia piel visual (colores, fondo, tipografía) para cambiar el ambiente de la mesa.
+Las reglas y probabilidades son las mismas en las 4 sedes. Ver «Los casinos del mundo» más abajo.
 
 **Jugar en línea:** https://alejo000111.github.io/Casino-Calculo/
 
@@ -37,9 +37,9 @@ Artifact: https://claude.ai/code/artifact/347ccffd-b078-4234-a87d-082d8eca78a7
 | Dividir | `Dividir` · `P` | Si tus 2 cartas valen igual, las separa en 2 manos independientes (cobra apuesta extra) |
 | Denunciar anomalía | `Denunciar anomalía` | Acusas al crupier de tramposo usando el posterior de Bayes |
 
-Reglas base (sede Bogotá): una sola baraja de 52, **el crupier se planta en 17** (incluido 17
-"suave"), blackjack natural paga **3 : 2**, empate devuelve la apuesta. Estas reglas cambian según
-la sede elegida — ver la sección siguiente.
+Reglas: una sola baraja de 52, **el crupier se planta en 17** (incluido 17 "suave"),
+blackjack natural paga **3 : 2**, empate devuelve la apuesta. Son las mismas en las 4 sedes —
+ver la sección siguiente.
 
 ### Dos interruptores para la sustentación
 
@@ -76,24 +76,27 @@ resultado. Es estadística inferencial —estimar un parámetro a partir de much
 
 ## Los casinos del mundo (barra nueva)
 
-Arriba de la mesa hay una barra **«Elige tu casino»** con 4 sedes. Cambiar de sede reinicia el
-zapato y el posterior de Bayes, cambia la piel visual (colores, fondo, tipografía) en alusión al
-lugar, y sube la dificultad con **reglas reales de casinos físicos** — no es solo cosmético:
+Arriba de la mesa hay una barra **«Elige tu casino»** con 4 sedes: 🇨🇴 Bogotá, 🇺🇸 Las Vegas,
+🇲🇨 Montecarlo y 🇲🇴 Macao. Cambiar de sede reinicia la mano y cambia la piel visual (colores,
+fondo, tipografía) en alusión al lugar — las reglas de juego son las mismas en las 4 (una baraja,
+crupier se planta en 17, blackjack paga 3:2).
 
-| Sede | Barajas en el zapato | Crupier pide en 17 suave | Blackjack paga | P(Tramposo) previa | Dificultad |
-|---|---|---|---|---|---|
-| 🇨🇴 Bogotá | 1 | No | 3 : 2 | 10 % | Fácil |
-| 🇺🇸 Las Vegas | 2 | No | 3 : 2 | 12 % | Medio |
-| 🇲🇨 Montecarlo | 4 | Sí | 6 : 5 | 15 % | Difícil |
-| 🇲🇴 Macao | 6 | Sí | 6 : 5 | 20 % | Muy difícil |
+Lo que **sí** cambia entre sedes, a propósito, es la previa `P(Tramposo)` del Teorema de Bayes
+(Panel 3) — así el jugador puede comparar en carne propia cómo el mismo resultado en la mesa lleva a
+un posterior distinto según de dónde partió la previa:
 
-Cada palanca conecta con un tema del curso ya presente en el HUD: más barajas diluye el conteo de
-cartas y agranda el espacio muestral del Panel 4 (`|E|` pasa de 52 a hasta 312 cartas); el crupier
-pidiendo en 17 suave y el pago reducido a 6:5 son reglas reales que suben la ventaja de la casa; y la
-previa `P(Tramposo)` más alta por sede deja ver en el Panel 3 cómo cambia el posterior de Bayes según
-de dónde parta la previa. No se usan nombres ni logos de casinos reales, solo la ciudad o país, para
-mantenerlo genérico. No puedes cambiar de sede a mitad de una mano (hay que repartir, plantarse o
-resolver primero).
+| Sede | P(Tramposo) previa | Confianza |
+|---|---|---|
+| 🇨🇴 Bogotá | 10 % | Confiable |
+| 🇺🇸 Las Vegas | 18 % | Vigilada |
+| 🇲🇨 Montecarlo | 28 % | Sospechosa |
+| 🇲🇴 Macao | 40 % | Muy sospechosa |
+
+`P(G|T) = 0.60` y `P(G|N) = 0.30` (las verosimilitudes) son las mismas en las 4 sedes — lo único que
+cambia es la previa, para que la comparación sea limpia y quede claro que es el Teorema de Bayes
+(previa × verosimilitud) el que mueve el resultado, no una regla de juego distinta. No se usan
+nombres ni logos de casinos reales, solo la ciudad o país, para mantenerlo genérico. No puedes
+cambiar de sede a mitad de una mano (hay que repartir, plantarse o resolver primero).
 
 ---
 

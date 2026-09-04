@@ -393,9 +393,7 @@
     font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.06em;
     color:var(--bone-dim);margin-top:3px;display:flex;justify-content:space-between;gap:6px;
   }
-  .locbtn .ldots{letter-spacing:.14em}
-  .locbtn .ldots i{color:var(--line);font-style:normal}
-  .locbtn .ldots i.on{color:var(--brass-hi)}
+  .locbtn .ldots{letter-spacing:.06em;color:var(--brass-hi);font-weight:700}
   .locbtn[aria-pressed="true"] .lname{color:var(--brass-hi)}
   .locbtn .lblurb{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
 
@@ -562,7 +560,7 @@
   <div class="locbar">
     <div class="locbar-head">
       <span class="locbar-title">&#127758; Elige tu casino</span>
-      <span class="locbar-sub">viajar sube la dificultad: m&aacute;s barajas, reglas m&aacute;s duras para el jugador</span>
+      <span class="locbar-sub">mismas reglas en todas partes &mdash; lo que cambia es qu&eacute; tan confiable es el crupier (previa P(Tramposo) del Panel 3)</span>
     </div>
     <div class="locrow" id="locRow"></div>
   </div>
@@ -649,7 +647,7 @@
         <div class="rows" id="p3rows"></div>
         <div class="derivation" id="p3deriv"></div>
         <div class="truth qa" id="p3truth"></div>
-        <div class="sust-hint">Cada mano que resuelve el crupier actualiza P(Tramposo) con Bayes.</div>
+        <div class="sust-hint">Cada mano que resuelve el crupier actualiza P(Tramposo) con Bayes. La <b>previa</b> con la que arrancas depende de la sede — mesas «sospechosas» parten de una previa más alta, así que el mismo resultado (crupier gana) empuja el posterior más arriba o más abajo según de dónde partiste. Cambia de casino y compara.</div>
       </div>
 
       <!-- Panel 4: conteo -->
@@ -808,13 +806,13 @@ const fnum = n => n.toLocaleString("es-CO");
 const comb = (n,k) => { if(k<0||k>n) return 0; k=Math.min(k,n-k); let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return Math.round(r); };
 const perm = (n,k) => { let r=1; for(let i=0;i<k;i++) r*=(n-i); return r; };
 
-/* ---------------- destinos: cada casino cambia reglas + piel visual ---------------- */
+/* ---------------- destinos: misma mesa, misma piel visual por lugar, distinta previa P(Tramposo) ---------------- */
 const LOCATIONS = {
   bogota: {
     name: "Bogotá", country: "Colombia", flag: "\u{1F1E8}\u{1F1F4}",
     decks: 1, hitSoft17: false, bjPayout: 1.5, pT0: 0.10, pGT: 0.60, pGN: 0.30,
-    diff: 1, diffLabel: "Fácil",
-    blurb: "Mesa de casa: 1 baraja, crupier se planta en 17.",
+    trustLabel: "Confiable",
+    blurb: "Mesa clásica de casa, la de siempre.",
     subtitle: "Blackjack · Visión de Conteo",
     theme: {
       "--felt":"#0c3527", "--felt-deep":"#08251b", "--felt-hi":"#155a43",
@@ -827,9 +825,9 @@ const LOCATIONS = {
   },
   vegas: {
     name: "Las Vegas", country: "Estados Unidos", flag: "\u{1F1FA}\u{1F1F8}",
-    decks: 2, hitSoft17: false, bjPayout: 1.5, pT0: 0.12, pGT: 0.62, pGN: 0.30,
-    diff: 2, diffLabel: "Medio",
-    blurb: "Neón toda la noche: 2 barajas, la casa ya arriesga más.",
+    decks: 1, hitSoft17: false, bjPayout: 1.5, pT0: 0.18, pGT: 0.60, pGN: 0.30,
+    trustLabel: "Vigilada",
+    blurb: "Neón toda la noche, la ciudad que nunca duerme.",
     subtitle: "Blackjack · Las Vegas Nights",
     theme: {
       "--felt":"#1a0b2e", "--felt-deep":"#0d0518", "--felt-hi":"#2d1454",
@@ -842,9 +840,9 @@ const LOCATIONS = {
   },
   montecarlo: {
     name: "Montecarlo", country: "Mónaco", flag: "\u{1F1F2}\u{1F1E8}",
-    decks: 4, hitSoft17: true, bjPayout: 1.2, pT0: 0.15, pGT: 0.65, pGN: 0.28,
-    diff: 3, diffLabel: "Difícil",
-    blurb: "Riviera elegante: 4 barajas, pide en 17 suave, blackjack paga 6:5.",
+    decks: 1, hitSoft17: false, bjPayout: 1.5, pT0: 0.28, pGT: 0.60, pGN: 0.30,
+    trustLabel: "Sospechosa",
+    blurb: "Riviera elegante, glamour de la Costa Azul.",
     subtitle: "Blackjack · Riviera Française",
     theme: {
       "--felt":"#0a1f3d", "--felt-deep":"#050f1f", "--felt-hi":"#163a66",
@@ -857,9 +855,9 @@ const LOCATIONS = {
   },
   macao: {
     name: "Macao", country: "China", flag: "\u{1F1F2}\u{1F1F4}",
-    decks: 6, hitSoft17: true, bjPayout: 1.2, pT0: 0.20, pGT: 0.68, pGN: 0.28,
-    diff: 4, diffLabel: "Muy difícil",
-    blurb: "El zapato completo: 6 barajas, reglas duras, casa muy afilada.",
+    decks: 1, hitSoft17: false, bjPayout: 1.5, pT0: 0.40, pGT: 0.60, pGN: 0.30,
+    trustLabel: "Muy sospechosa",
+    blurb: "El salón de los altos rodillos: luces rojas y doradas.",
     subtitle: "Blackjack · High Roller Room",
     theme: {
       "--felt":"#4a0e0e", "--felt-deep":"#2a0505", "--felt-hi":"#7a1414",
@@ -1628,17 +1626,12 @@ function toast(html){
 }
 
 /* ---------------- destinos: construir la barra y aplicar el cambio ---------------- */
-function diffDots(diff){
-  let out = "";
-  for(let i=1;i<=4;i++) out += `<i class="${i<=diff?"on":""}">${i<=diff?"●":"○"}</i>`;
-  return out;
-}
 function buildLocBar(){
   const row = $("#locRow");
   row.innerHTML = Object.entries(LOCATIONS).map(([id, loc]) => `
     <button class="locbtn" data-loc="${id}" aria-pressed="${id===S.location}" title="${loc.blurb}">
       <div class="lname"><span class="lflag">${loc.flag}</span>${loc.name}</div>
-      <div class="lmeta"><span>${loc.decks} baraja${loc.decks>1?"s":""}</span><span class="ldots">${diffDots(loc.diff)}</span></div>
+      <div class="lmeta"><span>P(Tramposo) previa: <b>${pct(loc.pT0)}</b></span><span class="ldots">${loc.trustLabel}</span></div>
       <div class="lblurb">${loc.blurb}</div>
     </button>
   `).join("");
@@ -1672,10 +1665,10 @@ function applyLocation(id){
   $("#brandSub").textContent = loc.subtitle;
   $("#dealerRule").textContent = loc.hitSoft17 ? "pide en 17 suave" : "se planta en 17";
   const ratioTxt = loc.bjPayout === 1.5 ? "3 : 2" : "6 : 5";
-  $("#feltLine").innerHTML = `Blackjack paga ${ratioTxt} &nbsp;&bull;&nbsp; ${loc.decks} baraja${loc.decks>1?"s":""} &middot; ${loc.diffLabel}`;
+  $("#feltLine").innerHTML = `Blackjack paga ${ratioTxt} &nbsp;&bull;&nbsp; ${loc.decks} baraja${loc.decks>1?"s":""}`;
 
   row_updatePressed();
-  toast(`<b>${loc.flag} ${loc.name}, ${loc.country}.</b> ${loc.blurb} Dificultad: <b>${loc.diffLabel}</b> (previa de crupier tramposo: ${pct(loc.pT0)}).`);
+  toast(`<b>${loc.flag} ${loc.name}, ${loc.country}.</b> ${loc.blurb} Mesa <b>${loc.trustLabel.toLowerCase()}</b>: previa P(Tramposo) = <b>${pct(loc.pT0)}</b>.`);
   render();
 }
 function row_updatePressed(){
