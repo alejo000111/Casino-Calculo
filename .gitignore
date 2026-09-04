@@ -1,0 +1,10 @@
+# Contexto de trabajo, no parte del entregable
+Conversación Gemini.txt
+
+# Apuntes personales de clase — no publicar en repo público.
+# Para incluirlos: git add -f Estadistica.pdf
+Estadistica.pdf
+
+# Sistema
+.DS_Store
+Thumbs.db
