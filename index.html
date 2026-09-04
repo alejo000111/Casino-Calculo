@@ -214,8 +214,29 @@
   .chip[data-v="25"]{background:#5cc98a}
   .chip[data-v="50"]{background:#5aa0d8}
   .chip[data-v="100"]{background:#2b2f2d;color:var(--bone);border-color:var(--brass)}
+  .chip[data-v="250"]{background:#b95bca;color:#fff}
+  .chip[data-v="500"]{background:#d6a62d;color:var(--ink);border-color:var(--brass-hi)}
+  .chip.allin{width:auto;min-width:72px;border-radius:26px;padding:0 14px;
+    background:linear-gradient(180deg,#d1483b,#8e211b);color:#fff;border-color:#f0a89f}
   .chip[aria-pressed="true"]{transform:translateY(-6px) scale(1.06);box-shadow:0 8px 16px rgba(0,0,0,.4),0 0 0 3px var(--brass-hi)}
+  .chip:disabled{opacity:.3;cursor:not-allowed;filter:grayscale(.7)}
   .chip:focus-visible{outline:2px solid var(--data);outline-offset:3px}
+  .custom-bet{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;width:100%}
+  .custom-bet label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--bone-dim)}
+  .custom-bet input{
+    width:125px;padding:9px 10px;border-radius:7px;border:1px solid var(--line);
+    background:rgba(0,0,0,.35);color:var(--bone);font-family:"JetBrains Mono",monospace;
+    font-size:12px;outline:none;
+  }
+  .custom-bet input:focus{border-color:var(--data);box-shadow:0 0 0 2px rgba(116,194,209,.15)}
+  .custom-bet input:disabled{opacity:.35;cursor:not-allowed}
+  .custom-bet button{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-radius:7px;cursor:pointer;
+    background:linear-gradient(180deg,#153f30,#0e2e23);color:var(--bone);border:1px solid var(--line);
+  }
+  .custom-bet button:hover:not(:disabled){border-color:var(--data-dim);transform:translateY(-1px)}
+  .custom-bet button:disabled{opacity:.34;cursor:not-allowed}
   .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .btn{
     font-family:"Big Shoulders Display",sans-serif;font-weight:600;font-size:16px;
@@ -595,6 +616,14 @@
           <button class="chip" data-v="25" aria-pressed="true">25</button>
           <button class="chip" data-v="50" aria-pressed="false">50</button>
           <button class="chip" data-v="100" aria-pressed="false">100</button>
+          <button class="chip" data-v="250" aria-pressed="false">250</button>
+          <button class="chip" data-v="500" aria-pressed="false">500</button>
+          <button class="chip allin" id="bAllIn" aria-pressed="false">ALL-IN</button>
+        </div>
+        <div class="custom-bet">
+          <label for="customBet">Apuesta libre:</label>
+          <input type="number" id="customBet" min="1" step="1" placeholder="Cantidad">
+          <button id="bCustomBet">Apostar cantidad</button>
         </div>
         <div class="actions" id="actions">
           <button class="btn primary" id="bDeal">Repartir</button>
@@ -1488,10 +1517,18 @@ function renderControls(){
                              cardVal(h.cards[0].r) === cardVal(h.cards[1].r) && S.chips >= h.staked);
   $("#bDenounce").disabled = playing || S.phase === "dealer";
   $("#bLoan").hidden = !(S.chips < 10 && (S.phase === "betting" || S.phase === "resolved"));
-  document.querySelectorAll("#chips .chip").forEach(c => {
-    c.setAttribute("aria-pressed", String(Number(c.dataset.v) === S.bet));
-    c.disabled = !betting;
+  document.querySelectorAll("#chips .chip[data-v]").forEach(c => {
+    const value = Number(c.dataset.v);
+    c.setAttribute("aria-pressed", String(betting && value === S.bet));
+    c.disabled = !betting || value > S.chips;
   });
+  const allIn = $("#bAllIn");
+  allIn.setAttribute("aria-pressed", String(betting && S.chips > 0 && S.bet === Math.floor(S.chips)));
+  allIn.disabled = !betting || S.chips <= 0;
+  const customBet = $("#customBet"), customBetBtn = $("#bCustomBet");
+  customBet.disabled = !betting || S.chips <= 0;
+  customBet.max = Math.floor(Math.max(0, S.chips));
+  customBetBtn.disabled = !betting || S.chips <= 0;
 }
 
 /* ---------------- Panel 5: convergencia de la simulación de Monte Carlo ---------------- */
@@ -1584,10 +1621,28 @@ $("#modalClose").addEventListener("click", () => {
   $("#tableWrap").classList.remove("reveal");
   if(S.phase === "resolved") newRoundState(); else render();
 });
-document.querySelectorAll("#chips .chip").forEach(c => c.addEventListener("click", () => {
+document.querySelectorAll("#chips .chip[data-v]").forEach(c => c.addEventListener("click", () => {
   if(S.phase !== "betting") return;
-  S.bet = Number(c.dataset.v); render();
+  const value = Number(c.dataset.v);
+  if(value > S.chips){ toast(`No tienes suficientes fichas para apostar <b>${fnum(value)}</b>.`); return; }
+  S.bet = value; $("#customBet").value = ""; render();
 }));
+$("#bAllIn").addEventListener("click", () => {
+  if(S.phase !== "betting") return;
+  if(S.chips <= 0){ toast("No tienes fichas para apostar."); return; }
+  S.bet = Math.floor(S.chips); $("#customBet").value = ""; render();
+  toast(`<b>ALL-IN</b>: apuestas todas tus fichas (${fnum(S.bet)}).`);
+});
+$("#bCustomBet").addEventListener("click", () => {
+  if(S.phase !== "betting") return;
+  const value = Number($("#customBet").value);
+  if(!Number.isFinite(value) || value < 1){ toast("Introduce una cantidad válida de fichas."); return; }
+  const bet = Math.floor(value);
+  if(bet > S.chips){ toast(`No puedes apostar <b>${fnum(bet)}</b>. Solo tienes <b>${fnum(S.chips)}</b> fichas.`); return; }
+  S.bet = bet; render();
+  toast(`Apuesta personalizada: <b>${fnum(bet)}</b> fichas.`);
+});
+$("#customBet").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); $("#bCustomBet").click(); } });
 $("#tgSust").addEventListener("click", e => {
   const on = document.body.classList.toggle("sustentacion");
   e.currentTarget.setAttribute("aria-pressed", String(on));
